@@ -1,0 +1,7 @@
+{
+  "name": "sql-quest",
+  "private": true,
+  "description": "SQL Quest with Lumi: a playful beginner-to-intermediate SQL course that runs in the browser",
+  "scripts": { "build": "cd src && python3 build.py" },
+  "devDependencies": { "sql.js": "1.10.3" }
+}
