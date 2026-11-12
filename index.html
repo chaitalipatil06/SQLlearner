@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SQL Quest with Lumi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg1:#fdf6ff; --bg2:#eef7ff; --ink:#3b3355; --muted:#7a7194; --card:#ffffffcc; --line:#ece4f7;
+  --pink:#ffb8cf; --pink2:#ff8fb3; --peach:#ffd8c2; --mint:#bfeedd; --mint2:#7fd8b8; --sky:#c6e3ff; --sky2:#8cc4ff;
+  --lav:#e1d4ff; --lav2:#b9a2ff; --butter:#fff1b8; --butter2:#ffd966; --coral:#ff9e8f;
+  --shadow:0 10px 30px -12px rgba(120,90,180,.35); --r:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2) 60%,#f3fff9);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.brand{font-family:'Baloo 2','Nunito',sans-serif;letter-spacing:.2px}
+code,pre,textarea.editor,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+a{color:#7a5cff}
+button{font-family:inherit;cursor:pointer}
+/* floating bubbles */
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bubbles span{position:absolute;bottom:-60px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,rgba(200,180,255,.25));border:1px solid rgba(185,162,255,.35);animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-115vh) translateX(30px)}}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:10px 20px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-size:26px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none}
+.brand b{background:linear-gradient(90deg,#ff7eb3,#9a7bff,#4fc3a1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav{display:flex;gap:6px;margin-left:10px}
+.nav a{padding:7px 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:700;font-size:14px}
+.nav a.on,.nav a:hover{background:var(--lav);color:var(--ink)}
+.stats{margin-left:auto;display:flex;gap:10px;align-items:center}
+.pill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:800;font-size:14px;box-shadow:0 2px 8px -4px rgba(120,90,180,.3)}
+.pill.gem{background:linear-gradient(90deg,#fff,#fff4fb)}
+.pill .bar{width:110px;height:10px;border-radius:9px;background:#f0eaf9;overflow:hidden}
+.pill .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pink2),var(--lav2),var(--mint2));border-radius:9px;transition:width .8s cubic-bezier(.2,.9,.3,1.2)}
+.iconbtn{border:none;background:#fff;border:1px solid var(--line);width:36px;height:36px;border-radius:50%;font-size:16px}
+.gem-bump{animation:bump .6s}
+@keyframes bump{30%{transform:scale(1.25) rotate(-6deg)}60%{transform:scale(.95)}}
+main{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+.view{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card{background:var(--card);backdrop-filter:blur(6px);border:1px solid #fff;border-radius:var(--r);box-shadow:var(--shadow);padding:22px 26px;margin:18px 0}
+.reveal{opacity:0;transform:translateY(24px);transition:all .6s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+/* hero */
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;padding:26px 34px;background:linear-gradient(135deg,#ffe3ee,#e9e2ff 55%,#dff6ff);border-radius:30px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero h1{font-size:52px;line-height:1;margin:6px 0 10px}
+.hero p{font-size:18px;color:#5b5278;max-width:520px}
+.hero .sparkle{position:absolute;font-size:20px;animation:twinkle 2.4s infinite}
+@keyframes twinkle{50%{opacity:.2;transform:scale(.6) rotate(40deg)}}
+.btn{border:none;border-radius:16px;padding:12px 22px;font-weight:800;font-size:16px;background:linear-gradient(90deg,#ff8fb3,#b48cff);color:#fff;box-shadow:0 6px 0 #d46e98,0 12px 20px -8px rgba(180,100,200,.6);transition:transform .12s, box-shadow .12s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #d46e98}
+.btn.mint{background:linear-gradient(90deg,#5fd3a8,#6cc7ff);box-shadow:0 6px 0 #3aa883,0 12px 20px -8px rgba(80,180,160,.6)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 4px 0 #e2d8f3;border:1px solid var(--line)}
+.btn.small{padding:7px 14px;font-size:14px;border-radius:12px}
+.btn:disabled{filter:grayscale(.8);opacity:.6;cursor:not-allowed;transform:none}
+.lumi-wrap{display:flex;justify-content:center}
+.lumi{width:260px;max-width:100%;animation:bob 3.2s ease-in-out infinite;filter:drop-shadow(0 18px 18px rgba(255,140,180,.35))}
+.lumi.sm{width:92px;flex:none}
+@keyframes bob{50%{transform:translateY(-12px) rotate(-2deg)}}
+.lumi .gill{transform-origin:center;animation:wiggle 1.6s ease-in-out infinite}
+.lumi .gill.r{animation-delay:.3s}
+@keyframes wiggle{50%{transform:rotate(6deg)}}
+.lumi .eye{animation:blink 4.5s infinite;transform-origin:center;transform-box:fill-box}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.lumi .gemglow{animation:glow 1.8s ease-in-out infinite}
+@keyframes glow{50%{opacity:.4}}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}
+.stat{background:#fff;border-radius:20px;padding:16px 18px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.stat .n{font-family:'Baloo 2';font-size:32px;font-weight:800;line-height:1}
+.stat .l{color:var(--muted);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.6px}
+/* map */
+.map{position:relative;height:640px;margin-top:10px}
+.map svg.path{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--ink);width:130px;text-align:center}
+.node .orb{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:28px;border:4px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.06),var(--shadow);transition:transform .2s}
+.node:hover .orb{transform:scale(1.1) rotate(-4deg)}
+.node .t{font-weight:800;font-size:13px;line-height:1.15}
+.node.locked .orb{background:#eee9f3 !important;color:#b8b0c8;filter:grayscale(1)}
+.node.locked{cursor:not-allowed}
+.node.current .orb{animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(185,162,255,.7),var(--shadow)}70%{box-shadow:0 0 0 18px rgba(185,162,255,0),var(--shadow)}}
+.node .done-star{position:absolute;top:-6px;right:24px;font-size:22px;animation:pop .5s}
+.chest .orb{border-radius:18px;width:62px;height:62px;font-size:28px;background:linear-gradient(135deg,#ffe9a8,#ffc6d9)}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.role{border-radius:20px;padding:16px;border:1px solid #fff;box-shadow:var(--shadow);transition:transform .2s}
+.role:hover{transform:translateY(-4px) rotate(-.5deg)}
+.role h3{margin:6px 0 4px;font-size:18px}
+.role p{font-size:13.5px;margin:0 0 8px;color:#5b5278}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chips span{background:#ffffffaa;border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800}
+.chips span.ok{background:#fff;outline:2px solid var(--mint2)}
+/* chapter */
+.ch-head{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;border-radius:30px;padding:24px 28px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.ch-head .art{width:150px;height:150px;animation:bob 4s ease-in-out infinite}
+.ch-head h1{font-size:40px;margin:0;line-height:1.05}
+.ch-head .kicker{font-weight:800;color:#6d5f8f;text-transform:uppercase;letter-spacing:1.4px;font-size:13px}
+.ch-head .sub{font-size:17px;color:#5b5278;margin-top:4px}
+.steps{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.steps span{background:#ffffffb0;padding:5px 12px;border-radius:999px;font-weight:800;font-size:13px}
+.steps span.ok{background:#fff;color:#2a9d74}
+.speech{display:flex;gap:14px;align-items:center}
+.bubble{position:relative;background:#fff;border-radius:20px;padding:14px 18px;font-weight:700;box-shadow:var(--shadow);border:2px solid var(--pink)}
+.bubble:before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);border:10px solid transparent;border-right-color:var(--pink)}
+.roletip{border-left:6px solid var(--lav2);background:#fbf9ff}
+.roletip b{color:#7a5cff}
+.section h2{margin:0 0 8px;font-size:26px;display:flex;align-items:center;gap:10px}
+.section h2 .num{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:var(--lav);flex:none}
+.section p,.section li{font-size:16.5px;line-height:1.6}
+.section code{background:#f4effc;border-radius:6px;padding:1px 6px;font-size:14px;color:#6a3fd1}
+.callout{background:#f1fbff;border:2px dashed var(--sky2);border-radius:16px;padding:12px 16px;margin:12px 0;font-size:15.5px}
+.callout.tip{background:#f2fff8;border-color:var(--mint2)}
+.callout.warn{background:#fff6f3;border-color:var(--coral)}
+table.mini{border-collapse:separate;border-spacing:0;margin:10px 0;width:100%;font-size:15px;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+table.mini th{background:var(--lav);text-align:left;padding:8px 12px}
+table.mini td{padding:7px 12px;border-top:1px solid var(--line);background:#fff}
+.codebox{position:relative;margin:12px 0}
+pre.sqlc{margin:0;background:#2e2a45;color:#f3eefe;border-radius:16px;padding:16px 18px;padding-right:110px;font-size:14px;line-height:1.55;overflow-x:auto;white-space:pre}
+pre.sqlc .k{color:#ff9fc6;font-weight:700}
+pre.sqlc .s{color:#b6f2c9}
+pre.sqlc .n{color:#ffd88a}
+pre.sqlc .c{color:#9a92b8;font-style:italic}
+pre.sqlc .f{color:#9fd3ff}
+.trybtn{position:absolute;top:10px;right:10px;border:none;border-radius:12px;padding:7px 12px;font-weight:800;background:var(--mint);color:#1d5c46;font-size:13px;transition:transform .15s}
+.trybtn:hover{transform:scale(1.06)}
+.copybtn{position:absolute;top:44px;right:10px;border:none;border-radius:12px;padding:5px 10px;font-weight:800;background:#ffffff22;color:#e9e3ff;font-size:12px}
+.result{margin-top:8px;animation:fadeUp .35s both}
+.result .meta{font-size:13px;color:var(--muted);font-weight:700;margin:4px 2px}
+.tblwrap{max-height:320px;overflow:auto;border-radius:14px;border:1px solid var(--line);background:#fff}
+table.res{border-collapse:collapse;width:100%;font-size:13.5px}
+table.res th{position:sticky;top:0;background:#f6f1ff;text-align:left;padding:7px 10px;font-family:'JetBrains Mono';font-size:12.5px}
+table.res td{padding:6px 10px;border-top:1px solid #f1ecf8;white-space:nowrap}
+table.res tr:nth-child(even) td{background:#fdfbff}
+td.null{color:#c4bbd6;font-style:italic}
+.err{background:#fff1f1;border:2px solid #ffc1c1;color:#a33;border-radius:14px;padding:10px 14px;font-weight:700;font-size:14px}
+/* playground */
+.play{display:grid;grid-template-columns:1fr 280px;gap:16px}
+textarea.editor{width:100%;min-height:150px;border-radius:16px;border:2px solid var(--lav);background:#2e2a45;color:#f3eefe;padding:14px;font-size:14px;line-height:1.5;resize:vertical;outline:none}
+textarea.editor:focus{border-color:var(--lav2);box-shadow:0 0 0 4px #e8defe}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.kbd{font-size:12px;color:var(--muted);font-weight:700}
+.schema{background:#fff;border-radius:16px;border:1px solid var(--line);padding:10px 12px;max-height:330px;overflow:auto;font-size:13px}
+.schema details{margin:4px 0}
+.schema summary{font-weight:800;cursor:pointer;padding:4px 6px;border-radius:8px}
+.schema summary:hover{background:#f6f1ff}
+.schema ul{margin:2px 0 6px 0;padding-left:20px;font-family:'JetBrains Mono';font-size:12px;color:#5b5278}
+/* quiz */
+.q{margin:14px 0 18px}
+.q .qt{font-weight:800;font-size:17px;margin-bottom:8px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;font-weight:700;font-size:15px;transition:all .15s}
+.opt:hover{border-color:var(--lav2);transform:translateY(-2px)}
+.opt.right{background:#e3fbef;border-color:var(--mint2);animation:pop .4s}
+.opt.wrong{background:#fff0f0;border-color:#ffb3b3;animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.why{margin-top:6px;font-size:14.5px;color:#4d6b5f;font-weight:700}
+.challenge{background:linear-gradient(135deg,#fff7e0,#ffeaf2);border:2px solid #ffe1a0}
+.complete-bar{text-align:center;padding:26px}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(60,40,90,.35);backdrop-filter:blur(4px);z-index:50;display:grid;place-items:center;animation:fadeUp .25s}
+.modal{background:#fff;border-radius:28px;padding:28px 32px;max-width:520px;width:92%;text-align:center;box-shadow:0 30px 60px -20px rgba(80,40,140,.5);animation:pop .45s}
+.modal h2{font-size:30px;margin:6px 0}
+.modal textarea{width:100%;height:80px;border-radius:12px;border:2px solid var(--line);padding:8px;font-family:'JetBrains Mono';font-size:12px}
+.badge{width:120px;height:120px;margin:0 auto;animation:spinIn .9s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes spinIn{from{transform:scale(0) rotate(-200deg)}to{transform:none}}
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:60;pointer-events:none;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#3b3355;color:#fff;padding:12px 20px;border-radius:16px;font-weight:800;z-index:70;animation:fadeUp .3s}
+/* games */
+.game-head{display:flex;gap:16px;align-items:center}
+.memgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;perspective:900px}
+.mcard{height:96px;position:relative;transform-style:preserve-3d;transition:transform .5s;cursor:pointer}
+.mcard.flip,.mcard.matched{transform:rotateY(180deg)}
+.mcard .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;display:grid;place-items:center;font-weight:800;padding:8px;text-align:center}
+.mcard .front{background:linear-gradient(135deg,#ffc8dc,#d9c9ff);font-size:30px;color:#fff;box-shadow:var(--shadow)}
+.mcard .back{background:#fff;border:2px solid var(--lav);transform:rotateY(180deg);font-size:15px}
+.mcard.matched .back{background:#e3fbef;border-color:var(--mint2)}
+.tokens{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.token{border:2px solid var(--lav);background:#fff;border-radius:12px;padding:10px 14px;text-align:left;font-family:'JetBrains Mono';font-weight:700;font-size:14px;transition:all .2s}
+.token:hover{transform:translateX(6px);border-color:var(--lav2)}
+.token.used{opacity:.25;pointer-events:none}
+.built{background:#2e2a45;color:#f3eefe;border-radius:16px;padding:14px;min-height:60px;font-family:'JetBrains Mono';font-size:14px;margin-top:12px}
+.built div{animation:fadeUp .3s}
+.jtables{display:flex;gap:20px;flex-wrap:wrap;margin:10px 0}
+.jtables table{border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:14px;box-shadow:var(--shadow)}
+.jtables th{background:var(--peach);padding:6px 12px}.jtables td{padding:5px 12px;border-top:1px solid var(--line)}
+.bigin{font-size:22px;width:110px;padding:8px 12px;border-radius:12px;border:2px solid var(--lav);font-weight:800;text-align:center;font-family:'Baloo 2'}
+.blitz-q{font-size:24px;font-weight:800;min-height:80px;display:grid;place-items:center;text-align:center;font-family:'Baloo 2'}
+.timer{height:14px;border-radius:9px;background:#f0eaf9;overflow:hidden}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--mint2),var(--butter2),var(--coral));transition:width 1s linear}
+.cert{border:6px double var(--lav2);border-radius:24px;padding:30px;text-align:center;background:linear-gradient(135deg,#fff,#fff4fa)}
+.cert h1{font-size:42px;margin:6px 0}
+.lockmsg{text-align:center;padding:40px}
+.cheat pre.sqlc{padding-right:18px}
+footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-size:13px;padding:20px}
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;text-align:center}.hero h1{font-size:40px}.hero p{margin:0 auto}
+  .statgrid,.roles{grid-template-columns:1fr 1fr}
+  .play{grid-template-columns:1fr}.opts{grid-template-columns:1fr}
+  .ch-head{grid-template-columns:1fr;text-align:center}.ch-head .art{margin:0 auto}
+  .nav{display:none}.pill .bar{width:60px}.memgrid{grid-template-columns:repeat(3,1fr)}
+  .map{height:auto}.map svg.path{display:none}.node{position:relative;left:auto!important;top:auto!important;transform:none;width:auto;flex-direction:row;margin:10px 0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.order-strip{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.order-strip span{padding:8px 14px;border-radius:12px;font-weight:800;font-family:'JetBrains Mono';font-size:13px;background:#fff;border:2px solid var(--lav);position:relative}
+.order-strip span:nth-child(1){background:#ffd8c2}.order-strip span:nth-child(2){background:#bfeedd}.order-strip span:nth-child(3){background:#c6e3ff}.order-strip span:nth-child(4){background:#ffc6da}.order-strip span:nth-child(5){background:#e1d4ff}.order-strip span:nth-child(6){background:#fff1b8}.order-strip span:nth-child(7){background:#d6f5f5}
+.order-strip span:not(:last-child):after{content:"→";position:absolute;right:-11px;top:7px;color:#b9a2ff}
+.kicker{font-weight:800}
+.checklist li{list-style:"✅ "}
+</style></head>
+<body><div class="bubbles"></div>
+<header class="topbar"><a class="brand" href="#home"><span style="font-size:28px">🫧</span><b>SQL Quest</b></a>
+<nav class="nav"><a href="#home">Map</a><a href="#ch-1" data-k="learn">Learn</a><a href="#cheatsheet">Cheat sheet</a></nav>
+<div class="stats"><div class="pill"><span id="lvl">Data Sprout</span></div><div class="pill"><div class="bar"><i id="topProgress" style="width:0"></i></div><span id="topPct">0%</span></div><div class="pill gem" id="gemPill">💎 <span id="gemCount">0</span></div><button class="iconbtn" id="settingsBtn" title="Progress & settings">⚙️</button></div></header>
+<main></main>
+<footer>SQL Quest · Lumi is an original mascot · Practice data is fictional · Runs entirely in your browser</footer>
+<script>const SEED_SQL = "CREATE TABLE departments (dept_id INTEGER PRIMARY KEY, dept_name TEXT NOT NULL, location TEXT);\nCREATE TABLE employees (emp_id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept_id INTEGER REFERENCES departments(dept_id), manager_id INTEGER REFERENCES employees(emp_id), hire_date TEXT, salary INTEGER);\nCREATE TABLE customers (customer_id INTEGER PRIMARY KEY, name TEXT, region TEXT, signup_date TEXT);\nCREATE TABLE products (product_id INTEGER PRIMARY KEY, product_name TEXT, category TEXT, price INTEGER);\nCREATE TABLE orders (order_id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customers(customer_id), emp_id INTEGER REFERENCES employees(emp_id), product_id INTEGER REFERENCES products(product_id), order_date TEXT, quantity INTEGER, amount INTEGER, status TEXT);\nINSERT INTO departments VALUES (1,'Sales','New York'),(2,'Marketing','Austin'),(3,'Operations','Chicago'),(4,'Finance','New York'),(5,'Product','San Francisco'),(6,'HR','Remote');\nINSERT INTO employees VALUES (1,'Maya Patel',NULL,NULL,'2016-03-01',185000),(2,'Leo Garcia',1,1,'2018-06-15',140000),(3,'Aisha Khan',1,2,'2020-01-10',82000),(4,'Ben Carter',1,2,'2021-04-05',76000),(5,'Chloe Wu',1,2,'2022-09-19',71000),(6,'Ravi Iyer',2,1,'2019-02-11',125000),(7,'Sofia Rossi',2,6,'2021-07-01',68000),(8,'Tom Becker',2,6,NULL,64000),(9,'Nora Silva',3,1,'2017-11-20',130000),(10,'Omar Haddad',3,9,'2020-05-25',72000),(11,'Grace Lee',3,9,'2023-02-14',61000),(12,'Daniel Kim',4,1,'2018-08-08',135000),(13,'Emma Novak',4,12,'2022-03-30',79000),(14,'Priya Shah',5,1,'2019-10-01',150000),(15,'Jack Murphy',5,14,'2021-12-06',118000),(16,'Lina Costa',6,1,'2020-08-17',98000);\nINSERT INTO customers VALUES (1,'Acme Corp','West','2025-02-04'),(2,'Blue Harbor','North','2025-03-07'),(3,'Cedar Labs','South','2025-04-10'),(4,'Delta Foods','East','2025-05-13'),(5,'Evergreen Inc','West','2025-06-16'),(6,'Fable Studio','North','2025-07-19'),(7,'Granite Bank','South','2025-08-22'),(8,'Helio Energy','East','2025-09-25'),(9,'Iris Health','West','2025-10-01'),(10,'Juniper Retail','North','2025-11-04'),(11,'Kite Logistics','South','2025-12-07'),(12,'Lotus Travel','East','2025-01-10'),(13,'Maple Schools',NULL,'2025-02-13'),(14,'Nimbus Cloud','North','2025-03-16');\nINSERT INTO products VALUES (1,'Starter Plan','Software',49),(2,'Pro Plan','Software',199),(3,'Enterprise Plan','Software',999),(4,'Onboarding Workshop','Services',1500),(5,'Data Audit','Services',3200),(6,'Support Add-on','Software',99);\nINSERT INTO orders VALUES (1,6,3,1,'2025-01-03',5,245,'completed'),(2,6,5,2,'2025-01-22',4,796,'completed'),(3,4,4,2,'2025-01-27',5,995,'completed'),(4,9,3,2,'2025-02-03',1,199,'completed'),(5,8,2,5,'2025-02-08',1,3200,'completed'),(6,5,3,1,'2025-02-09',2,98,'pending'),(7,5,2,2,'2025-02-09',5,995,'cancelled'),(8,2,3,6,'2025-02-22',4,396,'completed'),(9,5,5,4,'2025-03-14',1,1500,'completed'),(10,12,5,3,'2025-03-14',1,999,'cancelled'),(11,3,3,1,'2025-03-16',2,98,'completed'),(12,9,5,2,'2025-03-18',3,597,'completed'),(13,4,5,4,'2025-03-23',1,1500,'completed'),(14,8,5,6,'2025-03-27',5,495,'completed'),(15,2,2,6,'2025-04-03',4,396,'pending'),(16,9,2,1,'2025-05-02',2,98,'completed'),(17,8,5,6,'2025-05-03',4,396,'completed'),(18,1,5,4,'2025-05-07',1,1500,'completed'),(19,4,5,1,'2025-05-17',3,147,'completed'),(20,6,3,6,'2025-06-03',2,198,'completed'),(21,6,4,6,'2025-06-10',5,495,'completed'),(22,9,4,1,'2025-06-20',1,49,'pending'),(23,3,4,3,'2025-07-28',1,999,'completed'),(24,3,5,4,'2025-07-28',1,1500,'pending'),(25,6,5,2,'2025-08-02',5,995,'completed'),(26,3,3,4,'2025-08-08',1,1500,'completed'),(27,4,3,5,'2025-08-20',1,3200,'pending'),(28,4,3,6,'2025-09-16',2,198,'completed'),(29,9,2,2,'2025-09-17',5,995,'completed'),(30,11,3,5,'2025-09-18',1,3200,'completed'),(31,12,4,4,'2025-09-18',1,1500,'cancelled'),(32,9,2,2,'2025-10-07',5,995,'completed'),(33,12,5,3,'2025-10-10',1,999,'completed'),(34,3,3,4,'2025-10-12',1,1500,'completed'),(35,2,4,6,'2025-12-03',4,396,'completed'),(36,12,4,4,'2025-12-06',1,1500,'completed'),(37,5,2,6,'2025-12-12',2,198,'cancelled'),(38,9,5,5,'2025-12-18',1,3200,'pending'),(39,2,5,4,'2025-12-22',1,1500,'completed'),(40,6,3,2,'2026-01-03',4,796,'cancelled'),(41,9,2,2,'2026-01-03',3,597,'cancelled'),(42,3,4,2,'2026-01-04',3,597,'completed'),(43,6,5,6,'2026-01-13',4,396,'completed'),(44,12,4,6,'2026-02-04',3,297,'completed'),(45,8,2,5,'2026-02-27',1,3200,'completed'),(46,12,4,2,'2026-03-14',5,995,'pending'),(47,3,4,3,'2026-04-01',1,999,'completed'),(48,7,2,6,'2026-04-06',2,198,'completed'),(49,9,4,5,'2026-04-20',1,3200,'cancelled'),(50,12,2,4,'2026-04-27',1,1500,'completed'),(51,11,4,2,'2026-06-06',3,597,'completed'),(52,11,3,1,'2026-07-02',5,245,'pending'),(53,12,4,6,'2026-07-08',3,297,'completed'),(54,11,2,6,'2026-07-22',3,297,'completed'),(55,6,3,5,'2026-08-19',1,3200,'cancelled'),(56,3,2,1,'2026-08-26',2,98,'completed'),(57,3,2,1,'2026-09-13',4,196,'completed'),(58,9,3,1,'2026-09-17',3,147,'completed'),(59,7,3,2,'2026-10-16',5,995,'completed'),(60,9,3,2,'2026-10-21',1,199,'completed');";</script>
+<script>// ===== SQL Quest course content =====
+// All examples run on SQLite (in the browser). Differences from other databases are called out.
+const ROLES = [
+  { name: "Business Analyst", color: "#ffd6e0", icon: "chart",
+    why: "Pull numbers yourself instead of waiting on the data team. Turn questions from leaders into queries.",
+    chapters: [1,2,3,4,5,6,7,10] },
+  { name: "Product Manager", color: "#d6ecff", icon: "rocket",
+    why: "Check feature adoption, funnels and retention without a ticket. Talk confidently with engineers.",
+    chapters: [1,2,3,5,6,8,9,10] },
+  { name: "Operations / Project Manager", color: "#d9f7e6", icon: "gear",
+    why: "Track throughput, backlogs, SLAs and team workload from the source data.",
+    chapters: [1,2,3,4,5,6,7,10] },
+  { name: "Data / BI Analyst", color: "#efe1ff", icon: "gem",
+    why: "SQL is the core interview skill. Window functions and CTEs are what separate you from other candidates.",
+    chapters: [1,2,3,4,5,6,7,8,9,10] }
+];
+
+const CHAPTERS = [
+// ---------------------------------------------------------------- 1
+{
+  id: 1, title: "Welcome to Databases", sub: "Tables, rows, columns and keys", art: "table", color: "#ffd6e0",
+  lumi: "Hi! I'm Lumi. A database is just a tidy collection of tables, like very strict spreadsheets. Let's peek inside!",
+  roleTip: "In interviews for analyst and manager roles you'll often hear: \"Our data is in a warehouse, can you pull it?\" This chapter gives you the words to answer.",
+  sections: [
+    { h: "What is a database?", html: `
+      <p>A <b>database</b> stores information so it can be searched quickly and safely by many people at once. Most companies use a <b>relational database</b>, which keeps data in <b>tables</b>.</p>
+      <p><b>SQL</b> (say "sequel" or "S-Q-L") stands for <i>Structured Query Language</i>. It is the language you use to ask a database questions. Almost every company uses it: PostgreSQL, MySQL, SQL Server, Snowflake, BigQuery and SQLite all speak SQL with small accent differences.</p>
+      <div class="callout">Think of it this way: <b>Excel</b> = you scroll and click. <b>SQL</b> = you describe the answer you want and the database finds it for you.</div>` },
+    { h: "Tables, rows and columns", html: `
+      <p>A <b>table</b> holds one kind of thing. Each <b>row</b> is one record (one employee, one order). Each <b>column</b> is one attribute (name, salary, date).</p>
+      <p>Our practice company <b>Lumi Labs</b> has five tables:</p>
+      <ul>
+        <li><code>departments</code>: 6 teams like Sales and Finance</li>
+        <li><code>employees</code>: 16 people, their department, manager, hire date and salary</li>
+        <li><code>customers</code>: 14 client companies and their region</li>
+        <li><code>products</code>: 6 things we sell</li>
+        <li><code>orders</code>: 60 sales, each linking a customer, a sales rep (employee) and a product</li>
+      </ul>
+      <p>Open the <b>Schema</b> tab in the playground below at any time to see every column.</p>` },
+    { h: "Keys: how tables connect", html: `
+      <p>A <b>primary key (PK)</b> uniquely identifies each row. <code>employees.emp_id</code> is a primary key: no two employees share one, and it is never empty.</p>
+      <p>A <b>foreign key (FK)</b> is a column that points to a primary key in another table. <code>orders.customer_id</code> points to <code>customers.customer_id</code>. That is how the database knows which customer placed each order.</p>
+      <div class="callout tip">Keys are the reason you can later JOIN tables together (Chapter 6). Interviewers love asking "what's the difference between a primary key and a foreign key?"</div>` },
+    { h: "Your very first query", html: `
+      <p>Click <b>Try it</b> to run this. It shows every column (<code>*</code>) of the departments table.</p>
+      <pre class="sql">SELECT * FROM departments;</pre>
+      <p>Now try another table:</p>
+      <pre class="sql">SELECT * FROM products;</pre>
+      <p>The semicolon <code>;</code> ends a statement. SQL keywords are not case-sensitive, but writing them in CAPITALS makes queries easier to read.</p>` },
+    { h: "Data types you'll meet", html: `
+      <table class="mini"><tr><th>Type</th><th>Holds</th><th>Example</th></tr>
+      <tr><td>INTEGER</td><td>Whole numbers</td><td>42</td></tr>
+      <tr><td>DECIMAL / REAL</td><td>Numbers with decimals (use DECIMAL for money)</td><td>199.99</td></tr>
+      <tr><td>TEXT / VARCHAR</td><td>Words</td><td>'Sales'</td></tr>
+      <tr><td>DATE</td><td>Dates, written 'YYYY-MM-DD'</td><td>'2026-03-15'</td></tr>
+      <tr><td>NULL</td><td>"Unknown / missing". It is not zero and not blank.</td><td>NULL</td></tr></table>
+      <p>Text and dates go in <b>single quotes</b>: <code>'East'</code>. Numbers don't.</p>` }
+  ],
+  quiz: [
+    { q: "In a table of employees, what is one row?", opts: ["One attribute, like salary","One employee","The whole table","A database"], a: 1, why: "Each row is one record: here, one employee." },
+    { q: "orders.customer_id points to customers.customer_id. What is orders.customer_id?", opts: ["A primary key","A foreign key","A data type","A row"], a: 1, why: "A column that references another table's primary key is a foreign key." },
+    { q: "What does NULL mean?", opts: ["Zero","An empty string ''","Unknown or missing","An error"], a: 2, why: "NULL means the value is unknown or missing. It is different from 0 or ''." }
+  ],
+  challenge: { prompt: "Show <b>all columns</b> of the <code>customers</code> table.", starter: "-- write your query here\n", solution: "SELECT * FROM customers;", ordered: false, hint: "SELECT * FROM table_name;" }
+},
+// ---------------------------------------------------------------- 2
+{
+  id: 2, title: "SELECT: Asking for Columns", sub: "SELECT, FROM, aliases, DISTINCT, math", art: "columns", color: "#d6ecff",
+  lumi: "SELECT is your magic word. Tell the database WHICH columns you want and FROM which table.",
+  roleTip: "Managers rarely need every column. Picking just the right columns makes reports readable and queries faster.",
+  sections: [
+    { h: "Choose your columns", html: `
+      <p>List the columns you want after <code>SELECT</code>, separated by commas:</p>
+      <pre class="sql">SELECT name, salary
+FROM employees;</pre>
+      <p>The order you list them is the order they appear. <code>SELECT *</code> is fine for exploring, but in real reports list the columns you need.</p>` },
+    { h: "Rename with AS (aliases)", html: `
+      <p>An <b>alias</b> gives a column a friendlier name in the result:</p>
+      <pre class="sql">SELECT name AS employee, salary AS yearly_pay
+FROM employees;</pre>
+      <p>If an alias has spaces, wrap it in double quotes: <code>AS "Yearly Pay"</code>.</p>` },
+    { h: "Do math in SELECT", html: `
+      <p>You can calculate new columns on the fly. Monthly pay:</p>
+      <pre class="sql">SELECT name, salary, salary / 12 AS monthly_pay
+FROM employees;</pre>
+      <p>Careful: in SQLite, PostgreSQL and SQL Server, dividing two whole numbers drops the decimals (<code>7 / 2 = 3</code>). Multiply by <code>1.0</code> to keep them:</p>
+      <pre class="sql">SELECT name, ROUND(salary * 1.0 / 12, 2) AS monthly_pay
+FROM employees;</pre>
+      <p>Join text together with <code>||</code>:</p>
+      <pre class="sql">SELECT product_name || ' (' || category || ')' AS label
+FROM products;</pre>` },
+    { h: "Unique values with DISTINCT", html: `
+      <p>Which order statuses exist? <code>DISTINCT</code> removes duplicate rows:</p>
+      <pre class="sql">SELECT DISTINCT status FROM orders;</pre>
+      <pre class="sql">SELECT DISTINCT category FROM products;</pre>` },
+    { h: "Comments and good style", html: `
+      <p>Use <code>--</code> for a one-line comment. Put each clause on its own line. Your future self (and your reviewer) will thank you.</p>
+      <pre class="sql">-- Product price list
+SELECT product_name,
+       price
+FROM products;</pre>` }
+  ],
+  quiz: [
+    { q: "Which query returns only the name and region of customers?", opts: ["SELECT * FROM customers;","SELECT name, region FROM customers;","SELECT customers FROM name, region;","GET name, region FROM customers;"], a: 1, why: "SELECT lists the columns, FROM names the table." },
+    { q: "What does SELECT DISTINCT status FROM orders return?", opts: ["Every order","Each status value once","The number of statuses","Only completed orders"], a: 1, why: "DISTINCT removes duplicates, so each status shows once." },
+    { q: "In SQLite, what is 7 / 2?", opts: ["3.5","3","4","Error"], a: 1, why: "Integer divided by integer drops the decimals. Use 7 * 1.0 / 2 to get 3.5." }
+  ],
+  challenge: { prompt: "Show each product's <code>product_name</code> and its price with 10% off, named <code>sale_price</code>.", starter: "SELECT ", solution: "SELECT product_name, price * 0.9 AS sale_price FROM products;", ordered: false, hint: "price * 0.9 AS sale_price" }
+},
+// ---------------------------------------------------------------- 3
+{
+  id: 3, title: "WHERE: Filtering Rows", sub: "Comparisons, AND/OR, IN, BETWEEN, LIKE, NULL", art: "funnel", color: "#d9f7e6",
+  lumi: "WHERE is a filter. Only rows that pass the test make it into your answer. Like a coffee filter for data!",
+  roleTip: "Almost every business question has a filter: \"last quarter\", \"in the West region\", \"completed orders only\". WHERE is how you say it.",
+  sections: [
+    { h: "Basic filters", html: `
+      <pre class="sql">SELECT * FROM orders
+WHERE status = 'completed';</pre>
+      <table class="mini"><tr><th>Operator</th><th>Meaning</th></tr>
+      <tr><td><code>=</code></td><td>equal</td></tr><tr><td><code>&lt;&gt;</code> or <code>!=</code></td><td>not equal</td></tr>
+      <tr><td><code>&gt; &gt;= &lt; &lt;=</code></td><td>greater / less than</td></tr></table>
+      <pre class="sql">SELECT name, salary FROM employees
+WHERE salary >= 100000;</pre>` },
+    { h: "Combine with AND / OR", html: `
+      <pre class="sql">SELECT * FROM orders
+WHERE status = 'completed' AND amount > 1000;</pre>
+      <p><code>AND</code> is checked before <code>OR</code>. When you mix them, <b>always use parentheses</b>:</p>
+      <pre class="sql">SELECT * FROM orders
+WHERE (status = 'pending' OR status = 'cancelled')
+  AND amount > 500;</pre>` },
+    { h: "IN, BETWEEN and LIKE", html: `
+      <p><code>IN</code> matches any value in a list:</p>
+      <pre class="sql">SELECT name, region FROM customers
+WHERE region IN ('East', 'West');</pre>
+      <p><code>BETWEEN</code> is an inclusive range (dates are text 'YYYY-MM-DD', so they sort correctly):</p>
+      <pre class="sql">SELECT order_id, order_date, amount FROM orders
+WHERE order_date BETWEEN '2025-01-01' AND '2025-03-31';</pre>
+      <p><code>LIKE</code> matches patterns. <code>%</code> = any characters, <code>_</code> = exactly one:</p>
+      <pre class="sql">SELECT name FROM employees
+WHERE name LIKE 'A%';   -- names starting with A</pre>` },
+    { h: "The NULL trap", html: `
+      <p>NULL means unknown, so <code>= NULL</code> is never true. Use <code>IS NULL</code> / <code>IS NOT NULL</code>:</p>
+      <pre class="sql">SELECT name, hire_date FROM employees
+WHERE hire_date IS NULL;</pre>
+      <pre class="sql">-- Try this: it returns nothing!
+SELECT * FROM customers WHERE region = NULL;</pre>
+      <div class="callout warn">Also watch <code>WHERE region &lt;&gt; 'East'</code>: it silently skips customers whose region is NULL.</div>` }
+  ],
+  quiz: [
+    { q: "Which returns customers with no region recorded?", opts: ["WHERE region = NULL","WHERE region IS NULL","WHERE region = ''","WHERE NOT region"], a: 1, why: "Only IS NULL tests for missing values." },
+    { q: "What does WHERE name LIKE '%son' match?", opts: ["Names starting with son","Names ending with son","Names exactly 'son'","Names containing %son"], a: 1, why: "% before 'son' means anything can come first, so it matches names ending in son." },
+    { q: "a OR b AND c is read as…", opts: ["(a OR b) AND c","a OR (b AND c)","Error","Random"], a: 1, why: "AND binds tighter than OR. Use parentheses to be explicit." }
+  ],
+  challenge: { prompt: "List <code>order_id</code> and <code>amount</code> of <b>completed</b> orders worth <b>more than 1000</b>.", starter: "SELECT order_id, amount\nFROM orders\nWHERE ", solution: "SELECT order_id, amount FROM orders WHERE status = 'completed' AND amount > 1000;", ordered: false, hint: "Two conditions joined with AND." }
+},
+// ---------------------------------------------------------------- 4
+{
+  id: 4, title: "ORDER BY & LIMIT", sub: "Sorting results and grabbing the top N", art: "sort", color: "#fff1c9",
+  lumi: "Leaders love a leaderboard. ORDER BY sorts, LIMIT keeps just the top few. Easy wins!",
+  roleTip: "\"Top 5 customers\", \"newest hires\", \"biggest deals this month\": the classic manager question is a sort plus a limit.",
+  sections: [
+    { h: "Sorting", html: `
+      <pre class="sql">SELECT name, salary FROM employees
+ORDER BY salary DESC;   -- highest first</pre>
+      <p><code>ASC</code> (ascending, the default) goes small to big or A to Z. <code>DESC</code> goes big to small.</p>
+      <p>Sort by several columns, applied left to right:</p>
+      <pre class="sql">SELECT name, dept_id, salary FROM employees
+ORDER BY dept_id ASC, salary DESC;</pre>` },
+    { h: "Top N with LIMIT", html: `
+      <pre class="sql">SELECT order_id, amount FROM orders
+ORDER BY amount DESC
+LIMIT 5;</pre>
+      <p><code>LIMIT</code> without <code>ORDER BY</code> gives random-ish rows. Always sort first.</p>
+      <p>Skip rows with <code>OFFSET</code> (useful for paging):</p>
+      <pre class="sql">SELECT order_id, amount FROM orders
+ORDER BY amount DESC
+LIMIT 5 OFFSET 5;   -- ranks 6 to 10</pre>
+      <div class="callout">Other databases: SQL Server uses <code>SELECT TOP 5</code>. Oracle and standard SQL use <code>FETCH FIRST 5 ROWS ONLY</code>.</div>` },
+    { h: "Sort by an alias or calculation", html: `
+      <pre class="sql">SELECT name, salary / 12 AS monthly
+FROM employees
+ORDER BY monthly DESC;</pre>
+      <p>NULLs sort first in ascending order in SQLite and last in PostgreSQL. Use <code>NULLS LAST</code> where supported if it matters.</p>` }
+  ],
+  quiz: [
+    { q: "How do you get the 3 newest hires?", opts: ["ORDER BY hire_date LIMIT 3","ORDER BY hire_date DESC LIMIT 3","LIMIT 3 ORDER BY hire_date","TOP hire_date 3"], a: 1, why: "Newest = latest date = DESC, then LIMIT 3." },
+    { q: "What is the default sort direction?", opts: ["DESC","ASC","Random","By primary key"], a: 1, why: "ORDER BY defaults to ascending." },
+    { q: "LIMIT 10 OFFSET 20 returns…", opts: ["Rows 1-10","Rows 21-30","Rows 20-30","Rows 10-20"], a: 1, why: "Skip 20 rows, then take 10: rows 21 through 30." }
+  ],
+  challenge: { prompt: "Show the <code>name</code> and <code>salary</code> of the <b>3 highest-paid</b> employees, highest first.", starter: "SELECT name, salary\nFROM employees\n", solution: "SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3;", ordered: true, hint: "ORDER BY salary DESC, then LIMIT 3." }
+},
+// ---------------------------------------------------------------- 5
+{
+  id: 5, title: "Summarize: GROUP BY", sub: "COUNT, SUM, AVG, MIN, MAX, GROUP BY, HAVING", art: "groups", color: "#efe1ff",
+  lumi: "Time to turn 60 rows into one clean summary. This is the chapter that makes dashboards happen!",
+  roleTip: "Headcount per team, revenue per region, average deal size: this is 80% of management reporting. Master this chapter.",
+  sections: [
+    { h: "Aggregate functions", html: `
+      <table class="mini"><tr><th>Function</th><th>Gives you</th></tr>
+      <tr><td><code>COUNT(*)</code></td><td>number of rows</td></tr>
+      <tr><td><code>COUNT(col)</code></td><td>number of non-NULL values</td></tr>
+      <tr><td><code>COUNT(DISTINCT col)</code></td><td>number of unique values</td></tr>
+      <tr><td><code>SUM(col)</code> / <code>AVG(col)</code></td><td>total / average</td></tr>
+      <tr><td><code>MIN(col)</code> / <code>MAX(col)</code></td><td>smallest / largest</td></tr></table>
+      <pre class="sql">SELECT COUNT(*) AS orders,
+       SUM(amount) AS revenue,
+       AVG(amount) AS avg_order,
+       MAX(amount) AS biggest
+FROM orders
+WHERE status = 'completed';</pre>` },
+    { h: "GROUP BY: one row per group", html: `
+      <p>Add <code>GROUP BY</code> to get a summary <i>per</i> something:</p>
+      <pre class="sql">SELECT status, COUNT(*) AS orders, SUM(amount) AS total
+FROM orders
+GROUP BY status;</pre>
+      <pre class="sql">SELECT dept_id, COUNT(*) AS headcount, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY dept_id
+ORDER BY headcount DESC;</pre>
+      <div class="callout tip"><b>Golden rule:</b> every column in SELECT must either be in GROUP BY or inside an aggregate like SUM().</div>` },
+    { h: "HAVING: filter the groups", html: `
+      <p><code>WHERE</code> filters <b>rows before</b> grouping. <code>HAVING</code> filters <b>groups after</b>:</p>
+      <pre class="sql">SELECT customer_id, SUM(amount) AS spend
+FROM orders
+WHERE status = 'completed'     -- row filter
+GROUP BY customer_id
+HAVING SUM(amount) > 5000      -- group filter
+ORDER BY spend DESC;</pre>` },
+    { h: "The order SQL actually runs in", html: `
+      <p>You write <code>SELECT</code> first, but the database runs it almost last:</p>
+      <div class="order-strip"><span>FROM</span><span>WHERE</span><span>GROUP BY</span><span>HAVING</span><span>SELECT</span><span>ORDER BY</span><span>LIMIT</span></div>
+      <p>That's why you can't use a SELECT alias inside WHERE (it doesn't exist yet) but you <i>can</i> use it in ORDER BY.</p>` }
+  ],
+  quiz: [
+    { q: "Which filters groups after aggregation?", opts: ["WHERE","HAVING","ORDER BY","LIMIT"], a: 1, why: "HAVING runs after GROUP BY, so it can test SUM(), COUNT() and friends." },
+    { q: "COUNT(hire_date) on employees where one hire_date is NULL gives…", opts: ["16","15","NULL","Error"], a: 1, why: "COUNT(col) skips NULLs. COUNT(*) would give 16." },
+    { q: "SELECT dept_id, name, COUNT(*) FROM employees GROUP BY dept_id is…", opts: ["Perfect","Breaks the golden rule: name isn't grouped or aggregated","Faster","The same as COUNT(*)"], a: 1, why: "name is neither in GROUP BY nor aggregated. Strict databases reject it." }
+  ],
+  challenge: { prompt: "For each <code>region</code> in <code>customers</code>, count the customers as <code>num_customers</code>.", starter: "SELECT region, \nFROM customers\n", solution: "SELECT region, COUNT(*) AS num_customers FROM customers GROUP BY region;", ordered: false, hint: "COUNT(*) ... GROUP BY region" }
+},
+// ---------------------------------------------------------------- 6
+{
+  id: 6, title: "JOINs: Connecting Tables", sub: "INNER, LEFT, self joins and anti-joins", art: "venn", color: "#ffe0cc",
+  lumi: "Tables are friends who hold hands through keys. JOIN brings them together into one result!",
+  roleTip: "Real questions span tables: \"revenue by department\" needs orders + employees + departments. JOINs are the #1 SQL interview topic.",
+  sections: [
+    { h: "INNER JOIN: matching rows only", html: `
+      <pre class="sql">SELECT o.order_id, c.name AS customer, o.amount
+FROM orders o
+JOIN customers c ON c.customer_id = o.customer_id;</pre>
+      <p><code>o</code> and <code>c</code> are <b>table aliases</b>, a nickname so you can write <code>o.amount</code> instead of <code>orders.amount</code>. <code>JOIN</code> means <code>INNER JOIN</code>.</p>
+      <p><code>ON</code> says how rows match: usually foreign key = primary key.</p>` },
+    { h: "LEFT JOIN: keep everything on the left", html: `
+      <p>Which customers have <i>never</i> ordered? An inner join would hide them. A <code>LEFT JOIN</code> keeps every customer and fills NULL where there's no order:</p>
+      <pre class="sql">SELECT c.name, o.order_id
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.customer_id
+ORDER BY o.order_id;</pre>
+      <p>Keep only the non-matches. This is called an <b>anti-join</b>:</p>
+      <pre class="sql">SELECT c.name
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.customer_id
+WHERE o.order_id IS NULL;</pre>` },
+    { h: "Join + GROUP BY = real reports", html: `
+      <pre class="sql">SELECT d.dept_name, COUNT(*) AS headcount, ROUND(AVG(e.salary)) AS avg_salary
+FROM employees e
+JOIN departments d ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY headcount DESC;</pre>
+      <p>Three tables at once: revenue by product category.</p>
+      <pre class="sql">SELECT p.category, SUM(o.amount) AS revenue
+FROM orders o
+JOIN products p ON p.product_id = o.product_id
+WHERE o.status = 'completed'
+GROUP BY p.category;</pre>` },
+    { h: "Self join: the org chart", html: `
+      <p>A table can join to itself. Each employee's manager is also an employee:</p>
+      <pre class="sql">SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON m.emp_id = e.manager_id;</pre>` },
+    { h: "Join gotchas", html: `
+      <ul>
+        <li><b>Row explosion:</b> joining one-to-many repeats the "one" side. Check row counts before and after.</li>
+        <li><b>LEFT JOIN + WHERE on the right table</b> turns it back into an inner join. Put that condition in <code>ON</code> instead.</li>
+        <li><code>RIGHT JOIN</code> is a mirrored LEFT JOIN, and <code>FULL OUTER JOIN</code> keeps both sides. Both are less common.</li>
+      </ul>` }
+  ],
+  quiz: [
+    { q: "You need all customers, including those with zero orders. Use…", opts: ["customers INNER JOIN orders","customers LEFT JOIN orders","orders LEFT JOIN customers","CROSS JOIN"], a: 1, why: "LEFT JOIN keeps every row of the left table, customers." },
+    { q: "What does the ON clause do?", opts: ["Sorts rows","Defines how rows from the two tables match","Filters groups","Renames tables"], a: 1, why: "ON gives the matching condition, usually FK = PK." },
+    { q: "Customers with no orders: LEFT JOIN orders then…", opts: ["WHERE o.order_id IS NULL","WHERE o.order_id = 0","HAVING COUNT(*) = 0","ORDER BY NULL"], a: 0, why: "Unmatched rows have NULL in every orders column." }
+  ],
+  challenge: { prompt: "Show each <b>department name</b> and its <b>total salary</b> as <code>payroll</code>. Only include employees who have a department.", starter: "SELECT d.dept_name, \nFROM employees e\nJOIN departments d ON \n", solution: "SELECT d.dept_name, SUM(e.salary) AS payroll FROM employees e JOIN departments d ON d.dept_id = e.dept_id GROUP BY d.dept_name;", ordered: false, hint: "JOIN on dept_id, then SUM(e.salary) ... GROUP BY d.dept_name" }
+},
+// ---------------------------------------------------------------- 7
+{
+  id: 7, title: "CASE & Handy Functions", sub: "If-then logic, NULL fixes, text and dates", art: "switch", color: "#d6f5f5",
+  lumi: "CASE lets your query make decisions, like labelling deals Small, Medium or Large. Very manager-y!",
+  roleTip: "Business rules like \"tier customers\", \"flag late orders\" or \"bucket deal sizes\" are CASE statements.",
+  sections: [
+    { h: "CASE WHEN: if-then-else", html: `
+      <pre class="sql">SELECT order_id, amount,
+       CASE
+         WHEN amount >= 2000 THEN 'Large'
+         WHEN amount >= 500  THEN 'Medium'
+         ELSE 'Small'
+       END AS deal_size
+FROM orders;</pre>
+      <p>Conditions are checked top to bottom. The first true one wins.</p>` },
+    { h: "Count by condition (pivot trick)", html: `
+      <pre class="sql">SELECT emp_id,
+       COUNT(*) AS total,
+       SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+       SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
+FROM orders
+GROUP BY emp_id;</pre>
+      <p>This "conditional aggregation" builds a mini pivot table in one query.</p>` },
+    { h: "Fixing NULLs: COALESCE and NULLIF", html: `
+      <pre class="sql">SELECT name, COALESCE(region, 'Unknown') AS region
+FROM customers;</pre>
+      <p><code>COALESCE(a, b)</code> returns the first value that isn't NULL. <code>NULLIF(x, 0)</code> turns 0 into NULL, which prevents divide-by-zero errors: <code>revenue / NULLIF(orders, 0)</code>.</p>` },
+    { h: "Text and date functions", html: `
+      <pre class="sql">SELECT UPPER(name), LENGTH(name), SUBSTR(name, 1, 3)
+FROM customers;</pre>
+      <p>Dates in SQLite use <code>strftime</code>:</p>
+      <pre class="sql">SELECT strftime('%Y-%m', order_date) AS month,
+       SUM(amount) AS revenue
+FROM orders
+WHERE status = 'completed'
+GROUP BY month
+ORDER BY month;</pre>
+      <table class="mini"><tr><th>Task</th><th>SQLite</th><th>PostgreSQL</th><th>SQL Server</th></tr>
+      <tr><td>Month</td><td><code>strftime('%Y-%m', d)</code></td><td><code>DATE_TRUNC('month', d)</code></td><td><code>FORMAT(d,'yyyy-MM')</code></td></tr>
+      <tr><td>Year</td><td><code>strftime('%Y', d)</code></td><td><code>EXTRACT(YEAR FROM d)</code></td><td><code>YEAR(d)</code></td></tr>
+      <tr><td>Today</td><td><code>date('now')</code></td><td><code>CURRENT_DATE</code></td><td><code>GETDATE()</code></td></tr></table>` }
+  ],
+  quiz: [
+    { q: "COALESCE(NULL, NULL, 'x', 'y') returns…", opts: ["NULL","'x'","'y'","Error"], a: 1, why: "It returns the first non-NULL argument." },
+    { q: "Amount 2500 with WHEN amount >= 500 THEN 'Medium' listed BEFORE WHEN amount >= 2000 THEN 'Large' gives…", opts: ["Large","Medium","Both","NULL"], a: 1, why: "CASE stops at the first true condition. Put the most specific one first." },
+    { q: "Why use NULLIF(orders, 0) in a division?", opts: ["To round","To avoid divide-by-zero","To sort","To count NULLs"], a: 1, why: "Dividing by NULL returns NULL instead of an error." }
+  ],
+  challenge: { prompt: "Show <code>name</code> and <code>salary</code> of every employee plus a column <code>band</code>: <b>'Senior'</b> if salary ≥ 120000, otherwise <b>'Core'</b>.", starter: "SELECT name, salary,\n       CASE \n       END AS band\nFROM employees;", solution: "SELECT name, salary, CASE WHEN salary >= 120000 THEN 'Senior' ELSE 'Core' END AS band FROM employees;", ordered: false, hint: "CASE WHEN salary >= 120000 THEN 'Senior' ELSE 'Core' END" }
+},
+// ---------------------------------------------------------------- 8
+{
+  id: 8, title: "Subqueries & CTEs", sub: "Queries inside queries, and WITH for readable steps", art: "nest", color: "#ffe6f2",
+  lumi: "Big questions are easier in small steps. A CTE lets you name each step, like chapters in a story!",
+  roleTip: "Analyst take-home tests are full of multi-step logic. CTEs make your answers readable, and interviewers notice.",
+  sections: [
+    { h: "Subquery in WHERE", html: `
+      <p>Who earns more than the company average?</p>
+      <pre class="sql">SELECT name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);</pre>
+      <p>The inner query runs first and returns one number.</p>
+      <pre class="sql">-- Customers who bought the Enterprise Plan
+SELECT name FROM customers
+WHERE customer_id IN (SELECT customer_id FROM orders WHERE product_id = 3);</pre>` },
+    { h: "CTEs with WITH", html: `
+      <p>A <b>Common Table Expression</b> names a temporary result you can use like a table:</p>
+      <pre class="sql">WITH customer_spend AS (
+  SELECT customer_id, SUM(amount) AS spend
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY customer_id
+)
+SELECT c.name, s.spend
+FROM customer_spend s
+JOIN customers c ON c.customer_id = s.customer_id
+ORDER BY s.spend DESC;</pre>
+      <p>You can chain several: <code>WITH a AS (...), b AS (...) SELECT ...</code>. Read them top to bottom like steps in a recipe.</p>` },
+    { h: "EXISTS", html: `
+      <pre class="sql">SELECT d.dept_name
+FROM departments d
+WHERE EXISTS (SELECT 1 FROM employees e WHERE e.dept_id = d.dept_id AND e.salary > 120000);</pre>
+      <p><code>EXISTS</code> is true if the inner query finds at least one row. <code>NOT EXISTS</code> is a clean anti-join.</p>` }
+  ],
+  quiz: [
+    { q: "What does WITH x AS (...) create?", opts: ["A permanent table","A named temporary result for this query","An index","A view saved forever"], a: 1, why: "A CTE lives only for the query it's in." },
+    { q: "Best reason to prefer CTEs over deeply nested subqueries?", opts: ["Always faster","Readability: logic reads top to bottom","They change data","They avoid joins"], a: 1, why: "CTEs mainly make complex logic easy to follow and debug." },
+    { q: "WHERE salary > (SELECT AVG(salary) FROM employees): the subquery returns…", opts: ["A table","One single value","Nothing","Every salary"], a: 1, why: "It's a scalar subquery: one row, one column." }
+  ],
+  challenge: { prompt: "List the <code>name</code> of employees who earn <b>more than the average salary</b>.", starter: "SELECT name\nFROM employees\nWHERE ", solution: "SELECT name FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);", ordered: false, hint: "Compare salary to (SELECT AVG(salary) FROM employees)" }
+},
+// ---------------------------------------------------------------- 9
+{
+  id: 9, title: "Window Functions", sub: "Ranks, running totals and LAG, without losing rows", art: "window", color: "#e6f0ff",
+  lumi: "Window functions are a superpower. You keep every row AND add a rank or running total next to it. Ooh!",
+  roleTip: "\"Top 3 per team\", \"month-over-month growth\", \"running total\". These are window functions, and they're the intermediate-level interview favorite.",
+  sections: [
+    { h: "The idea", html: `
+      <p><code>GROUP BY</code> squashes rows into one per group. A <b>window function</b> computes across related rows but keeps every row:</p>
+      <pre class="sql">SELECT name, dept_id, salary,
+       AVG(salary) OVER (PARTITION BY dept_id) AS dept_avg
+FROM employees;</pre>
+      <p><code>OVER (...)</code> makes it a window function. <code>PARTITION BY</code> says "restart for each group".</p>` },
+    { h: "Ranking", html: `
+      <pre class="sql">SELECT name, dept_id, salary,
+       ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num,
+       RANK()       OVER (ORDER BY salary DESC) AS rnk,
+       DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rnk
+FROM employees;</pre>
+      <p>With ties 100, 100, 90: ROW_NUMBER gives 1, 2, 3. RANK gives 1, 1, 3. DENSE_RANK gives 1, 1, 2.</p>
+      <p><b>Top earner per department</b> (a classic!):</p>
+      <pre class="sql">WITH ranked AS (
+  SELECT name, dept_id, salary,
+         ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rn
+  FROM employees
+)
+SELECT * FROM ranked WHERE rn = 1;</pre>` },
+    { h: "Running totals", html: `
+      <pre class="sql">SELECT order_date, amount,
+       SUM(amount) OVER (ORDER BY order_date) AS running_total
+FROM orders
+WHERE status = 'completed';</pre>` },
+    { h: "LAG and LEAD: compare to the previous row", html: `
+      <pre class="sql">WITH monthly AS (
+  SELECT strftime('%Y-%m', order_date) AS month, SUM(amount) AS revenue
+  FROM orders WHERE status = 'completed'
+  GROUP BY month
+)
+SELECT month, revenue,
+       LAG(revenue) OVER (ORDER BY month) AS prev_month,
+       revenue - LAG(revenue) OVER (ORDER BY month) AS change
+FROM monthly;</pre>
+      <p><code>LAG</code> looks back one row, and <code>LEAD</code> looks forward. Month-over-month growth in one query!</p>` }
+  ],
+  quiz: [
+    { q: "Ties 100, 100, 90 with DENSE_RANK give…", opts: ["1,2,3","1,1,3","1,1,2","2,2,1"], a: 2, why: "DENSE_RANK shares ranks on ties and leaves no gap." },
+    { q: "What does PARTITION BY dept_id do?", opts: ["Deletes departments","Restarts the calculation for each department","Sorts the output","Groups and collapses rows"], a: 1, why: "It splits rows into separate windows without collapsing them." },
+    { q: "Which function gets the previous month's revenue on the same row?", opts: ["LEAD","LAG","FIRST","PREV"], a: 1, why: "LAG looks at the prior row in the window's order." }
+  ],
+  challenge: { prompt: "Show <code>name</code>, <code>salary</code> and <code>salary_rank</code>: each employee's rank by salary, highest = 1, using <b>RANK()</b>.", starter: "SELECT name, salary,\n       RANK() OVER () AS salary_rank\nFROM employees;", solution: "SELECT name, salary, RANK() OVER (ORDER BY salary DESC) AS salary_rank FROM employees;", ordered: false, hint: "RANK() OVER (ORDER BY salary DESC)" }
+},
+// ---------------------------------------------------------------- 10
+{
+  id: 10, title: "Boss Level: Real Reports", sub: "KPIs, cohorts, top-N, and interview prep", art: "trophy", color: "#fff0d6",
+  lumi: "Final chapter! Let's combine everything into the reports a real manager would ask for. You've got this!",
+  roleTip: "These are the exact queries hiring managers ask about in case interviews. Practice explaining each one out loud.",
+  sections: [
+    { h: "Monthly KPI dashboard query", html: `
+      <pre class="sql">SELECT strftime('%Y-%m', order_date)        AS month,
+       COUNT(*)                              AS orders,
+       COUNT(DISTINCT customer_id)           AS active_customers,
+       SUM(amount)                           AS revenue,
+       ROUND(AVG(amount), 0)                 AS avg_order_value
+FROM orders
+WHERE status = 'completed'
+GROUP BY month
+ORDER BY month;</pre>` },
+    { h: "Sales rep leaderboard with share of total", html: `
+      <pre class="sql">SELECT e.name,
+       SUM(o.amount) AS sales,
+       ROUND(100.0 * SUM(o.amount) / SUM(SUM(o.amount)) OVER (), 1) AS pct_of_total
+FROM orders o
+JOIN employees e ON e.emp_id = o.emp_id
+WHERE o.status = 'completed'
+GROUP BY e.name
+ORDER BY sales DESC;</pre>` },
+    { h: "Cancellation rate per product", html: `
+      <pre class="sql">SELECT p.product_name,
+       COUNT(*) AS orders,
+       ROUND(100.0 * SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) / COUNT(*), 1) AS cancel_pct
+FROM orders o
+JOIN products p ON p.product_id = o.product_id
+GROUP BY p.product_name
+ORDER BY cancel_pct DESC;</pre>` },
+    { h: "Year-over-year growth", html: `
+      <pre class="sql">WITH yearly AS (
+  SELECT strftime('%Y', order_date) AS yr, SUM(amount) AS revenue
+  FROM orders WHERE status = 'completed'
+  GROUP BY yr
+)
+SELECT yr, revenue,
+       LAG(revenue) OVER (ORDER BY yr) AS last_year,
+       ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY yr)) / LAG(revenue) OVER (ORDER BY yr), 1) AS growth_pct
+FROM yearly;</pre>
+      <div class="callout">2026 only has data through October here, so the growth number is year-to-date. Pointing this out in an interview shows good judgment!</div>` },
+    { h: "Interview checklist", html: `
+      <ul class="checklist">
+        <li>Second-highest salary (<code>DENSE_RANK</code> or a subquery)</li>
+        <li>Find duplicates (<code>GROUP BY ... HAVING COUNT(*) &gt; 1</code>)</li>
+        <li>Customers with no orders (anti-join)</li>
+        <li>Employees earning more than their manager (self join)</li>
+        <li>Top N per group (<code>ROW_NUMBER</code> + <code>PARTITION BY</code>)</li>
+        <li>Month-over-month change (<code>LAG</code>)</li>
+        <li>Explain: WHERE vs HAVING, INNER vs LEFT JOIN, UNION vs UNION ALL, DELETE vs TRUNCATE</li>
+      </ul>
+      <p>Bonus to try: employees who earn more than their manager.</p>
+      <pre class="sql">SELECT e.name, e.salary, m.name AS manager, m.salary AS manager_salary
+FROM employees e
+JOIN employees m ON m.emp_id = e.manager_id
+WHERE e.salary > m.salary;</pre>` }
+  ],
+  quiz: [
+    { q: "Best way to find duplicate customer names?", opts: ["SELECT DISTINCT name","GROUP BY name HAVING COUNT(*) > 1","ORDER BY name","WHERE name = name"], a: 1, why: "Group by the value and keep groups with more than one row." },
+    { q: "SUM(SUM(amount)) OVER () in a grouped query gives…", opts: ["An error always","The grand total across all groups","The running total","Each row's amount"], a: 1, why: "The inner SUM is per group; the window SUM over () adds all groups together." },
+    { q: "A YoY number where this year only has 10 months is…", opts: ["Perfectly comparable","Year-to-date, so it should be flagged or compared to the same months","Always negative","Invalid SQL"], a: 1, why: "Compare like with like: same months, or call it out clearly." }
+  ],
+  challenge: { prompt: "Final boss! For each <b>region</b>, show total <b>completed</b> revenue as <code>revenue</code>, highest first. (Hint: orders don't have a region, so join customers.)", starter: "SELECT c.region, \nFROM orders o\nJOIN customers c ON \nWHERE \nGROUP BY \nORDER BY ", solution: "SELECT c.region, SUM(o.amount) AS revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.status = 'completed' GROUP BY c.region ORDER BY revenue DESC;", ordered: true, hint: "JOIN on customer_id, WHERE status = 'completed', GROUP BY c.region, ORDER BY revenue DESC" }
+}
+];
+
+// ===== Reward games (one unlocks after every 2 chapters) =====
+const GAMES = [
+  { id: 1, after: 2, title: "Keyword Memory", kind: "memory", desc: "Flip cards to match each SQL keyword with what it does. Fewest flips wins!",
+    pairs: [["SELECT","pick columns"],["FROM","choose table"],["WHERE","filter rows"],["DISTINCT","remove duplicates"],["AS","rename"],["*","all columns"],["NULL","unknown value"],["PK","unique row id"]] },
+  { id: 2, after: 4, title: "Clause Shuffle", kind: "order", desc: "The clauses fell out of order! Tap them in the correct order to rebuild each query.",
+    rounds: [
+      ["SELECT name", "FROM employees", "WHERE salary > 90000", "ORDER BY salary DESC", "LIMIT 5"],
+      ["SELECT status, COUNT(*)", "FROM orders", "GROUP BY status", "HAVING COUNT(*) > 5", "ORDER BY 2 DESC"],
+      ["SELECT c.name, o.amount", "FROM orders o", "JOIN customers c ON c.customer_id = o.customer_id", "WHERE o.amount > 1000", "ORDER BY o.amount DESC"]
+    ] },
+  { id: 3, after: 6, title: "Join Detective", kind: "join", desc: "Look at the two tiny tables and predict how many rows each join returns.",
+    left: { name: "pets", cols: ["pet","owner_id"], rows: [["Mochi",1],["Pip",2],["Bun",2],["Taro",4]] },
+    right: { name: "owners", cols: ["owner_id","owner"], rows: [[1,"Ana"],[2,"Ben"],[3,"Cy"]] },
+    rounds: [
+      { q: "pets INNER JOIN owners ON owner_id", a: 3, why: "Mochi→Ana, Pip→Ben, Bun→Ben. Taro's owner 4 doesn't exist." },
+      { q: "pets LEFT JOIN owners", a: 4, why: "All 4 pets stay; Taro gets NULL owner." },
+      { q: "owners LEFT JOIN pets", a: 4, why: "Ana(1) + Ben(2 pets) + Cy with NULL = 4 rows." },
+      { q: "pets CROSS JOIN owners", a: 12, why: "Every combination: 4 × 3 = 12." },
+      { q: "Owners with no pets (anti-join)", a: 1, why: "Only Cy." }
+    ] },
+  { id: 4, after: 8, title: "Brain Teasers", kind: "teaser", desc: "Classic puzzles to stretch your logic muscles. Think slow; the obvious answer is often a trap!",
+    rounds: [
+      { q: "A bat and a ball cost $1.10 together. The bat costs $1.00 more than the ball. How many cents does the ball cost?", a: "5", why: "Ball = 5¢, bat = $1.05. The tempting answer 10¢ makes the bat only 90¢ more." },
+      { q: "5 machines make 5 widgets in 5 minutes. How many minutes do 100 machines need to make 100 widgets?", a: "5", why: "Each machine makes 1 widget in 5 minutes, no matter how many machines there are." },
+      { q: "A lily patch doubles in size every day. It covers the lake on day 48. On which day did it cover half the lake?", a: "47", why: "It doubles from half to full in one day." },
+      { q: "A drawer has red and blue socks, all mixed up, and the room is dark. How many socks must you pull out to be sure you have a matching pair?", a: "3", why: "With only 2 colors, 3 socks guarantees two of them match." },
+      { q: "Table A has 6 rows, table B has 5. What's the MOST rows an INNER JOIN could return?", a: "30", why: "If every row matches every row (same key everywhere), it behaves like a cross join: 6 × 5." },
+      { q: "What comes next: 2, 3, 5, 7, 11, 13, ?", a: "17", why: "They're prime numbers." }
+    ] },
+  { id: 5, after: 10, title: "Speed Blitz", kind: "blitz", desc: "60 seconds. True or false? Answer as many as you can. Then claim your certificate!",
+    items: [
+      ["HAVING filters groups after aggregation.", true], ["WHERE x = NULL finds missing values.", false], ["LEFT JOIN keeps all rows from the left table.", true],
+      ["COUNT(*) skips NULLs.", false], ["DISTINCT removes duplicate rows.", true], ["SELECT runs before WHERE.", false],
+      ["DENSE_RANK leaves gaps after ties.", false], ["A primary key can be NULL.", false], ["UNION ALL keeps duplicates.", true],
+      ["CTEs start with the keyword WITH.", true], ["ORDER BY can use a SELECT alias.", true], ["LIMIT without ORDER BY guarantees the top rows.", false],
+      ["LAG looks at the previous row.", true], ["A foreign key points to another table's primary key.", true], ["AND is evaluated before OR.", true],
+      ["7 / 2 = 3.5 in SQLite.", false], ["COALESCE returns the first non-NULL value.", true], ["CROSS JOIN of 3 and 4 rows gives 7 rows.", false],
+      ["PARTITION BY collapses rows like GROUP BY.", false], ["BETWEEN is inclusive of both ends.", true]
+    ] }
+];
+</script>
+<script>// ===== SQL Quest app =====
+(function(){
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const KEY = 'sqlquest-v1';
+const LEVELS = [[0,"Data Sprout"],[2,"Query Cadet"],[4,"Filter Ranger"],[6,"Join Knight"],[8,"Window Wizard"],[10,"SQL Sage"]];
+const PASTELS = ['#ffb8cf','#c6e3ff','#bfeedd','#e1d4ff','#fff1b8','#ffd8c2','#b9a2ff','#7fd8b8','#ff9fc6'];
+
+// ---------- state ----------
+let S = { name:"", gems:0, done:{}, quiz:{}, solved:{}, games:{}, tries:{} };
+function load(){ try{ const t = localStorage.getItem(KEY); if(t) S = Object.assign(S, JSON.parse(t)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} updateTop(); }
+load();
+const doneCount = () => CHAPTERS.filter(c => S.done[c.id]).length;
+const level = () => { let n = doneCount(), l = LEVELS[0][1]; LEVELS.forEach(([k,v]) => { if(n >= k) l = v; }); return l; };
+const chUnlocked = id => id === 1 || !!S.done[id-1];
+const gameUnlocked = g => !!S.done[g.after-1] && !!S.done[g.after];
+function addGems(n){ S.gems += n; save(); const p = $('#gemPill'); if(p){ p.classList.remove('gem-bump'); void p.offsetWidth; p.classList.add('gem-bump'); } }
+
+// ---------- SVG art ----------
+function lumiSVG(cls=''){
+  return `<svg class="lumi ${cls}" viewBox="0 0 220 220" aria-label="Lumi the axolotl">
+  <defs><radialGradient id="lg-head" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#ffe1ec"/><stop offset="1" stop-color="#ffb3cb"/></radialGradient>
+  <radialGradient id="lg-gem" cx="40%" cy="30%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#bfeedd"/><stop offset="1" stop-color="#8cc4ff"/></radialGradient></defs>
+  <path d="M150 178 Q200 170 196 140 Q186 160 160 160 Z" fill="#ffa3c2"/>
+  <ellipse cx="110" cy="172" rx="48" ry="32" fill="#ffb8cf"/>
+  <ellipse cx="110" cy="178" rx="30" ry="20" fill="#ffe4ee"/>
+  <g class="gill l" fill="none" stroke="#ff7fae" stroke-width="9" stroke-linecap="round">
+    <path d="M44 70 Q22 52 14 40"/><path d="M38 92 Q14 88 4 80"/><path d="M42 114 Q20 122 10 128"/></g>
+  <g class="gill l" fill="#ffc6da"><circle cx="14" cy="40" r="7"/><circle cx="4" cy="80" r="7"/><circle cx="10" cy="128" r="7"/></g>
+  <g class="gill r" fill="none" stroke="#ff7fae" stroke-width="9" stroke-linecap="round">
+    <path d="M176 70 Q198 52 206 40"/><path d="M182 92 Q206 88 216 80"/><path d="M178 114 Q200 122 210 128"/></g>
+  <g class="gill r" fill="#ffc6da"><circle cx="206" cy="40" r="7"/><circle cx="216" cy="80" r="7"/><circle cx="210" cy="128" r="7"/></g>
+  <ellipse cx="110" cy="96" rx="74" ry="60" fill="url(#lg-head)"/>
+  <circle cx="86" cy="52" r="4" fill="#ff9fc0" opacity=".7"/><circle cx="104" cy="44" r="3" fill="#ff9fc0" opacity=".7"/><circle cx="126" cy="50" r="4" fill="#ff9fc0" opacity=".7"/>
+  <g class="eye"><ellipse cx="80" cy="94" rx="11" ry="13" fill="#3b3355"/><circle cx="84" cy="89" r="4.5" fill="#fff"/><circle cx="77" cy="99" r="2" fill="#fff"/></g>
+  <g class="eye"><ellipse cx="140" cy="94" rx="11" ry="13" fill="#3b3355"/><circle cx="144" cy="89" r="4.5" fill="#fff"/><circle cx="137" cy="99" r="2" fill="#fff"/></g>
+  <ellipse cx="62" cy="116" rx="12" ry="7" fill="#ff8fb3" opacity=".45"/><ellipse cx="158" cy="116" rx="12" ry="7" fill="#ff8fb3" opacity=".45"/>
+  <path d="M98 118 Q110 130 122 118" fill="none" stroke="#3b3355" stroke-width="4" stroke-linecap="round"/>
+  <circle class="gemglow" cx="110" cy="160" r="24" fill="#bfeedd" opacity=".7"/>
+  <path d="M110 140 L126 154 L110 178 L94 154 Z" fill="url(#lg-gem)" stroke="#7fb8e8" stroke-width="2"/>
+  <path d="M94 154 L126 154 M110 140 L104 154 L110 178 L116 154 Z" fill="none" stroke="#ffffffaa" stroke-width="1.5"/>
+  <ellipse cx="88" cy="160" rx="10" ry="8" fill="#ffb8cf"/><ellipse cx="132" cy="160" rx="10" ry="8" fill="#ffb8cf"/>
+  </svg>`;
+}
+function art(kind, c){
+  const o = 'stroke="#3b3355" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+  const A = {
+    table:`<rect x="20" y="30" width="110" height="90" rx="12" fill="#fff" ${o}/><rect x="20" y="30" width="110" height="24" rx="12" fill="${c}" ${o}/><path d="M20 76H130M20 98H130M57 30V120M94 30V120" ${o} fill="none"/><circle cx="118" cy="22" r="10" fill="#ffd966" ${o}/>`,
+    columns:`<rect x="18" y="28" width="114" height="94" rx="12" fill="#fff" ${o}/><rect x="56" y="28" width="38" height="94" fill="${c}" ${o}/><path d="M18 52H132M18 76H132M18 100H132" fill="none" ${o}/><path d="M75 8V22M68 16L75 23L82 16" fill="none" ${o}/>`,
+    funnel:`<path d="M20 30H130L88 80V118L62 128V80Z" fill="${c}" ${o}/><circle cx="40" cy="18" r="6" fill="#ffb8cf" ${o}/><circle cx="75" cy="14" r="6" fill="#c6e3ff" ${o}/><circle cx="108" cy="20" r="6" fill="#fff1b8" ${o}/><circle cx="75" cy="140" r="6" fill="#c6e3ff" ${o}/>`,
+    sort:`<rect x="20" y="96" width="22" height="30" rx="5" fill="#fff" ${o}/><rect x="50" y="76" width="22" height="50" rx="5" fill="${c}" ${o}/><rect x="80" y="52" width="22" height="74" rx="5" fill="#fff" ${o}/><rect x="110" y="24" width="22" height="102" rx="5" fill="${c}" ${o}/><path d="M24 60L60 30M50 30H60V40" fill="none" ${o}/>`,
+    groups:`<circle cx="30" cy="30" r="8" fill="#ffb8cf" ${o}/><circle cx="52" cy="22" r="8" fill="#ffb8cf" ${o}/><circle cx="98" cy="24" r="8" fill="#c6e3ff" ${o}/><circle cx="120" cy="32" r="8" fill="#c6e3ff" ${o}/><circle cx="76" cy="40" r="8" fill="#bfeedd" ${o}/><path d="M40 50L40 70M76 56L76 70M110 50L110 70" ${o}/><rect x="26" y="78" width="28" height="48" rx="6" fill="#ffb8cf" ${o}/><rect x="62" y="102" width="28" height="24" rx="6" fill="#bfeedd" ${o}/><rect x="98" y="88" width="28" height="38" rx="6" fill="${c}" ${o}/>`,
+    venn:`<circle cx="58" cy="75" r="42" fill="#ffb8cf" fill-opacity=".7" ${o}/><circle cx="94" cy="75" r="42" fill="#c6e3ff" fill-opacity=".7" ${o}/><path d="M76 37A42 42 0 0 1 76 113A42 42 0 0 1 76 37Z" fill="${c}" ${o}/>`,
+    switch:`<path d="M75 14L112 50L75 86L38 50Z" fill="${c}" ${o}/><text x="75" y="58" text-anchor="middle" font-size="24" font-weight="800" fill="#3b3355">?</text><path d="M48 76L28 112M102 76L122 112" fill="none" ${o}/><rect x="8" y="112" width="44" height="24" rx="8" fill="#bfeedd" ${o}/><rect x="98" y="112" width="44" height="24" rx="8" fill="#ffb8cf" ${o}/>`,
+    nest:`<rect x="14" y="18" width="122" height="114" rx="16" fill="#fff" ${o}/><rect x="32" y="40" width="86" height="76" rx="14" fill="${c}" ${o}/><rect x="52" y="62" width="46" height="34" rx="10" fill="#fff1b8" ${o}/>`,
+    window:`<rect x="16" y="20" width="118" height="110" rx="12" fill="#fff" ${o}/><path d="M16 42H134M16 64H134M16 86H134M16 108H134" fill="none" stroke="#d9cfee" stroke-width="2"/><rect x="10" y="38" width="130" height="52" rx="10" fill="${c}" fill-opacity=".55" ${o}/><path d="M144 50V80M138 74L144 82L150 74" fill="none" ${o}/>`,
+    trophy:`<path d="M45 20H105V58A30 30 0 0 1 45 58Z" fill="#ffd966" ${o}/><path d="M45 30H28A18 18 0 0 0 46 62M105 30H122A18 18 0 0 1 104 62" fill="none" ${o}/><rect x="66" y="88" width="18" height="18" fill="#ffd966" ${o}/><rect x="46" y="106" width="58" height="20" rx="6" fill="${c}" ${o}/><path d="M75 34L79 44L90 44L81 50L84 60L75 54L66 60L69 50L60 44L71 44Z" fill="#fff"/>`
+  };
+  return `<svg class="art" viewBox="0 0 150 150">${A[kind]||A.table}</svg>`;
+}
+function badge(ch){
+  return `<svg class="badge" viewBox="0 0 120 120"><path d="M40 84L30 116L48 106L56 118L62 88Z" fill="#ffb8cf" stroke="#3b3355" stroke-width="3"/><path d="M80 84L90 116L72 106L64 118L58 88Z" fill="#c6e3ff" stroke="#3b3355" stroke-width="3"/>
+  <circle cx="60" cy="54" r="42" fill="${ch.color}" stroke="#3b3355" stroke-width="4"/><circle cx="60" cy="54" r="32" fill="#fff" stroke="#3b3355" stroke-width="3" stroke-dasharray="4 5"/>
+  <text x="60" y="66" text-anchor="middle" font-family="Baloo 2" font-size="34" font-weight="800" fill="#3b3355">${ch.id}</text></svg>`;
+}
+
+// ---------- SQL highlight ----------
+const KW = new Set('SELECT FROM WHERE AND OR NOT IN IS NULL AS ON JOIN LEFT RIGHT FULL OUTER INNER CROSS GROUP BY ORDER HAVING LIMIT OFFSET DISTINCT CASE WHEN THEN ELSE END WITH ASC DESC BETWEEN LIKE OVER PARTITION EXISTS UNION ALL INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE ROWS PRECEDING CURRENT ROW'.split(' '));
+const FN = new Set('COUNT SUM AVG MIN MAX ROUND COALESCE NULLIF UPPER LOWER LENGTH SUBSTR STRFTIME DATE RANK DENSE_RANK ROW_NUMBER LAG LEAD NTILE CAST ABS'.split(' '));
+function hl(sql){
+  const re = /(--[^\n]*)|('(?:[^']|'')*')|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]+\b)/g; let out = '', last = 0, m;
+  while((m = re.exec(sql))){
+    out += esc(sql.slice(last, m.index)); last = re.lastIndex;
+    if(m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+    else if(m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+    else if(m[3]) out += `<span class="n">${m[3]}</span>`;
+    else { const u = m[4].toUpperCase(); out += KW.has(u) ? `<span class="k">${m[4]}</span>` : FN.has(u) ? `<span class="f">${m[4]}</span>` : esc(m[4]); }
+  }
+  return out + esc(sql.slice(last));
+}
+
+// ---------- database ----------
+let SQL = null, db = null;
+const SQLJS_URLS = ['https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-asm.js','https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-asm.js','https://unpkg.com/sql.js@1.10.3/dist/sql-asm.js'];
+function loadScript(u){ return new Promise((ok, no) => { const s = document.createElement('script'); s.src = u; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
+const dbReady = (async () => {
+  for(const u of SQLJS_URLS){ if(window.initSqlJs) break; try{ await loadScript(u); }catch(e){} }
+  if(!window.initSqlJs){ toast('Could not load the SQL engine. Check your connection and refresh.'); throw new Error('sql.js not loaded'); }
+  SQL = await initSqlJs(); db = new SQL.Database(); db.run(SEED_SQL);
+})();
+function freshDb(){ const d = new SQL.Database(); d.run(SEED_SQL); return d; }
+function runOn(d, sql){ const r = d.exec(sql); return r.length ? r[r.length-1] : null; }
+function friendly(msg){
+  const m = msg.toLowerCase();
+  if(m.includes('no such table')) return "That table doesn't exist. Check the spelling in the Schema list.";
+  if(m.includes('no such column')) return "That column doesn't exist in this table. Peek at the Schema list, or check your table alias.";
+  if(m.includes('syntax error')) return "Small typo somewhere near the word shown. Check commas, quotes and keyword order.";
+  if(m.includes('ambiguous')) return "Two tables share that column name. Prefix it with the table alias, like o.amount.";
+  if(m.includes('misuse of aggregate')) return "Aggregates like SUM() belong in SELECT or HAVING, not WHERE.";
+  return "Lumi is scratching her head. Read the message and try again!";
+}
+function renderResult(el, sql){
+  if(!db){ el.innerHTML = '<div class="meta">Loading the SQL engine… one moment ✨</div>'; dbReady.then(() => renderResult(el, sql)); return null; }
+  try{
+    const t0 = performance.now(); const r = runOn(db, sql); const ms = (performance.now()-t0).toFixed(1);
+    if(!r){ el.innerHTML = `<div class="result"><div class="meta">✅ Ran fine, but no rows came back (${ms} ms).</div></div>`; return {columns:[],values:[]}; }
+    el.innerHTML = `<div class="result"><div class="meta">✨ ${r.values.length} row${r.values.length===1?'':'s'} · ${ms} ms</div>${table(r)}</div>`;
+    return r;
+  }catch(e){ el.innerHTML = `<div class="result err">🙈 ${esc(e.message)}<br><span style="font-weight:600">Lumi's hint: ${friendly(e.message)}</span></div>`; return null; }
+}
+function table(r){
+  const rows = r.values.slice(0, 200).map(v => '<tr>' + v.map(x => x === null ? '<td class="null">NULL</td>' : `<td>${esc(typeof x === 'number' && !Number.isInteger(x) ? +x.toFixed(4) : x)}</td>`).join('') + '</tr>').join('');
+  return `<div class="tblwrap"><table class="res"><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr>${rows}</table></div>`;
+}
+function norm(r, ordered){
+  if(!r) return null;
+  let rows = r.values.map(v => JSON.stringify(v.map(x => x === null ? null : typeof x === 'number' ? Math.round(x*100)/100 : String(x))));
+  if(!ordered) rows.sort();
+  return { cols: r.columns.length, rows };
+}
+function checkAnswer(userSql, ch){
+  const d1 = freshDb(), d2 = freshDb();
+  try{
+    const u = norm(runOn(d1, userSql), ch.challenge.ordered), s = norm(runOn(d2, ch.challenge.solution), ch.challenge.ordered);
+    if(!u) return { ok:false, msg:"Your query didn't return any rows yet." };
+    if(u.cols !== s.cols) return { ok:false, msg:`Expected ${s.cols} column${s.cols>1?'s':''}, you returned ${u.cols}. Check which columns you SELECT.` };
+    if(u.rows.length !== s.rows.length) return { ok:false, msg:`Expected ${s.rows.length} rows, you returned ${u.rows.length}. Check your filters or grouping.` };
+    if(u.rows.join() !== s.rows.join()) return { ok:false, msg: ch.challenge.ordered ? "Right size, but some values or the order differ. Check sorting and calculations." : "Right size, but some values differ. Check calculations and column order." };
+    return { ok:true };
+  }catch(e){ return { ok:false, msg: esc(e.message) + ' — ' + friendly(e.message) }; }
+  finally{ d1.close(); d2.close(); }
+}
+
+// ---------- UI helpers ----------
+function confetti(n=90){
+  for(let i=0;i<n;i++){ const d = document.createElement('div'); d.className = 'confetti';
+    d.style.left = Math.random()*100 + 'vw'; d.style.background = PASTELS[i % PASTELS.length];
+    d.style.animationDuration = (2 + Math.random()*2.5) + 's'; d.style.animationDelay = Math.random()*.6 + 's';
+    d.style.transform = `rotate(${Math.random()*360}deg)`; document.body.appendChild(d); setTimeout(() => d.remove(), 5500); }
+}
+function toast(t){ const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); }
+function modal(html, onMount){
+  const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.innerHTML = `<div class="modal">${html}</div>`;
+  bg.addEventListener('click', e => { if(e.target === bg || e.target.closest('[data-close]')) bg.remove(); });
+  document.body.appendChild(bg); if(onMount) onMount(bg); return bg;
+}
+function updateTop(){
+  const total = CHAPTERS.length + GAMES.length, got = doneCount() + GAMES.filter(g => S.games[g.id]).length;
+  const pct = Math.round(100 * got / total);
+  const p = $('#topProgress'); if(p){ p.style.width = pct + '%'; $('#topPct').textContent = pct + '%'; }
+  const g = $('#gemCount'); if(g) g.textContent = S.gems;
+  const l = $('#lvl'); if(l) l.textContent = level();
+}
+function codeBlocks(root){
+  $$('pre.sql', root).forEach(pre => {
+    const sql = pre.textContent.trim(); const box = document.createElement('div'); box.className = 'codebox';
+    box.innerHTML = `<pre class="sqlc">${hl(sql)}</pre><button class="trybtn">▶ Try it</button><button class="copybtn">to playground</button><div class="out"></div>`;
+    pre.replaceWith(box);
+    $('.trybtn', box).onclick = () => renderResult($('.out', box), sql);
+    $('.copybtn', box).onclick = () => { const ed = $('#pgEditor'); if(ed){ ed.value = sql; ed.scrollIntoView({behavior:'smooth', block:'center'}); ed.focus(); } };
+  });
+}
+function reveal(root){
+  const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.08});
+  $$('.reveal', root).forEach(el => io.observe(el));
+  setTimeout(() => $$('.reveal', root).forEach(el => el.classList.add('in')), 2500);
+}
+function schemaHTML(){
+  const T = { departments:['dept_id (PK)','dept_name','location'], employees:['emp_id (PK)','name','dept_id (FK)','manager_id (FK → employees)','hire_date','salary'],
+    customers:['customer_id (PK)','name','region','signup_date'], products:['product_id (PK)','product_name','category','price'],
+    orders:['order_id (PK)','customer_id (FK)','emp_id (FK, sales rep)','product_id (FK)','order_date','quantity','amount','status'] };
+  return `<div class="schema"><b>🗂️ Lumi Labs schema</b>${Object.entries(T).map(([t,c]) => `<details open><summary>${t}</summary><ul>${c.map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}</div>`;
+}
+function playground(starter){
+  return `<div class="card reveal"><h2 style="margin:0 0 4px">🧪 Playground</h2><p style="margin:0 0 10px;color:var(--muted)">Experiment freely. Nothing you do here can break the lesson data permanently.</p>
+  <div class="play"><div><textarea class="editor" id="pgEditor" spellcheck="false">${esc(starter)}</textarea>
+  <div class="row"><button class="btn mint small" id="pgRun">▶ Run</button><button class="btn ghost small" id="pgReset">↺ Reset data</button><span class="kbd">Ctrl / ⌘ + Enter to run</span></div><div id="pgOut"></div></div>${schemaHTML()}</div></div>`;
+}
+function wirePlayground(){
+  const ed = $('#pgEditor'); if(!ed) return;
+  const run = () => renderResult($('#pgOut'), ed.value);
+  $('#pgRun').onclick = run;
+  ed.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); run(); } });
+  $('#pgReset').onclick = () => { if(db){ db.close(); db = freshDb(); toast('Fresh data restored ✨'); } };
+}
+
+// ---------- views ----------
+function viewHome(){
+  const next = CHAPTERS.find(c => !S.done[c.id]);
+  const seq = []; CHAPTERS.forEach(c => { seq.push({t:'c', c}); const g = GAMES.find(g => g.after === c.id); if(g) seq.push({t:'g', g}); });
+  const xs = [100,290,480,670,880], ys = [90,320,550];
+  const pts = seq.map((s, i) => { const r = Math.floor(i/5), k = i % 5; return [r % 2 ? xs[4-k] : xs[k], ys[r]]; });
+  let d = `M${pts[0][0]} ${pts[0][1]}`; for(let i=1;i<pts.length;i++){ const [x0,y0] = pts[i-1], [x1,y1] = pts[i]; d += y0 === y1 ? ` L${x1} ${y1}` : ` C${x0 + (x0 > 500 ? 110 : -110)} ${y0} ${x1 + (x1 > 500 ? 110 : -110)} ${y1} ${x1} ${y1}`; }
+  const nodes = seq.map((s, i) => {
+    const [x,y] = pts[i];
+    if(s.t === 'c'){ const c = s.c, un = chUnlocked(c.id), dn = S.done[c.id], cur = next && next.id === c.id;
+      return `<a class="node ${un?'':'locked'} ${cur?'current':''}" style="left:${x/10}%;top:${y}px" href="#ch-${c.id}" title="${esc(c.title)}"><div class="orb" style="background:${c.color}">${c.id}</div>${dn?'<span class="done-star">⭐</span>':''}<div class="t">${esc(c.title)}</div></a>`; }
+    const g = s.g, un = gameUnlocked(g), dn = S.games[g.id];
+    return `<a class="node chest ${un?'':'locked'}" style="left:${x/10}%;top:${y}px" href="#game-${g.id}" title="${esc(g.title)}"><div class="orb">${dn?'🏆':un?'🎁':'🔒'}</div><div class="t">${esc(g.title)}</div></a>`;
+  }).join('');
+  const hi = S.name ? `Welcome back, ${esc(S.name)}!` : 'Welcome, adventurer!';
+  return `<section class="view">
+  <div class="hero"><span class="sparkle" style="top:18px;left:46%">✦</span><span class="sparkle" style="bottom:30px;left:8%;animation-delay:.8s">✧</span><span class="sparkle" style="top:40%;right:6%;animation-delay:1.4s">✦</span>
+    <div><div class="kicker" style="font-weight:800;color:#8a6fd1;letter-spacing:1.5px">${hi}</div><h1>SQL Quest<br><span style="font-size:30px;color:#7a5cff">with Lumi the axolotl</span></h1>
+    <p>Learn SQL from absolute zero to interview-ready in 10 bite-size chapters. Run real queries in your browser, earn gems and badges, and unlock a brain game every 2 chapters.</p>
+    <div class="row"><a class="btn" href="#ch-${next ? next.id : 10}" style="text-decoration:none">${doneCount() ? 'Continue quest →' : 'Start chapter 1 →'}</a><a class="btn ghost" href="#cheatsheet" style="text-decoration:none">📜 Cheat sheet</a></div></div>
+    <div class="lumi-wrap">${lumiSVG()}</div></div>
+  <div class="statgrid">
+    <div class="stat"><div class="n">${doneCount()}/10</div><div class="l">Chapters done</div></div>
+    <div class="stat"><div class="n">💎 ${S.gems}</div><div class="l">Gems earned</div></div>
+    <div class="stat"><div class="n">${GAMES.filter(g => S.games[g.id]).length}/5</div><div class="l">Games won</div></div>
+    <div class="stat"><div class="n" style="font-size:24px">${level()}</div><div class="l">Your rank</div></div></div>
+  <div class="card reveal"><h2 style="margin:0">🗺️ Your quest map</h2><p style="color:var(--muted);margin:4px 0 0">Finish chapters in order. Every 2 chapters, a treasure chest opens with a reward game.</p>
+    <div class="map"><svg class="path" viewBox="0 0 1000 640" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="#e3d8fb" stroke-width="16" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="2 14" stroke-linecap="round"/></svg>${nodes}</div></div>
+  <div class="card reveal"><h2 style="margin:0 0 4px">🎯 Built for the roles you're targeting</h2><p style="color:var(--muted);margin:0 0 14px">Each role leans on different chapters. Outlined chips are chapters you've finished.</p>
+    <div class="roles">${ROLES.map(r => `<div class="role" style="background:${r.color}"><h3>${r.name}</h3><p>${r.why}</p><div class="chips">${r.chapters.map(n => `<span class="${S.done[n]?'ok':''}">Ch ${n}</span>`).join('')}</div></div>`).join('')}</div></div>
+  <div class="card reveal"><h2 style="margin:0 0 8px">🏅 Badge shelf</h2><div style="display:flex;flex-wrap:wrap;gap:10px">${CHAPTERS.map(c => `<div title="${esc(c.title)}" style="width:76px;opacity:${S.done[c.id]?1:.18};filter:${S.done[c.id]?'none':'grayscale(1)'}">${badge(c).replace('class="badge"','style="width:76px;height:76px"')}</div>`).join('')}</div></div>
+  </section>`;
+}
+function viewChapter(id){
+  const c = CHAPTERS.find(x => x.id === id); if(!c) return viewHome();
+  const locked = !chUnlocked(id);
+  const qd = S.quiz[id] || {}; const qOk = c.quiz.every((_, i) => qd[i] === 'ok'); const sOk = !!S.solved[id];
+  const steps = `<div class="steps"><span class="ok">📖 Lesson</span><span class="${qOk?'ok':''}">${qOk?'✅':'❓'} Quiz</span><span class="${sOk?'ok':''}">${sOk?'✅':'🧩'} Challenge</span><span class="${S.done[id]?'ok':''}">${S.done[id]?'⭐ Complete':'⭐ Badge'}</span></div>`;
+  const lockNote = locked ? `<div class="card" style="text-align:center;background:#fff8e6"><b>🔒 Lumi suggests finishing Chapter ${id-1} first.</b> You can still peek, but the chapters build on each other.</div>` : '';
+  return `<section class="view">
+  <div class="ch-head" style="background:linear-gradient(135deg,${c.color},#ffffff)">${art(c.art, c.color)}<div><div class="kicker">Chapter ${c.id} of 10</div><h1>${esc(c.title)}</h1><div class="sub">${esc(c.sub)}</div>${steps}</div></div>
+  ${lockNote}
+  <div class="card reveal speech">${lumiSVG('sm')}<div class="bubble">${c.lumi}</div></div>
+  <div class="card reveal roletip">💼 <b>Why this matters for your job hunt:</b> ${c.roleTip}</div>
+  ${c.sections.map((s, i) => `<div class="card section reveal"><h2><span class="num" style="background:${c.color}">${i+1}</span>${esc(s.h)}</h2>${s.html}</div>`).join('')}
+  ${playground(c.sections.length ? '-- Try anything here!\nSELECT * FROM employees LIMIT 5;' : '')}
+  <div class="card reveal" id="quiz"><h2 style="margin:0">❓ Quick quiz</h2><p style="color:var(--muted);margin:4px 0 0">Get all ${c.quiz.length} right to unlock the badge. +10 💎 each on the first try.</p>
+    ${c.quiz.map((q, i) => `<div class="q" data-i="${i}"><div class="qt">${i+1}. ${esc(q.q)}</div><div class="opts">${q.opts.map((o, j) => `<button class="opt ${qd[i]==='ok' && j===q.a ? 'right':''}" data-j="${j}">${esc(o)}</button>`).join('')}</div><div class="why">${qd[i]==='ok' ? '💡 ' + esc(q.why) : ''}</div></div>`).join('')}</div>
+  <div class="card challenge reveal" id="challenge"><h2 style="margin:0 0 6px">🧩 Challenge ${sOk ? '<span style="color:#2a9d74">— solved!</span>' : ''}</h2><p style="font-size:17px">${c.challenge.prompt}</p>
+    <textarea class="editor" id="chEditor" spellcheck="false">${esc(S.tries['code'+id] || c.challenge.starter)}</textarea>
+    <div class="row"><button class="btn mint small" id="chRun">▶ Run</button><button class="btn small" id="chCheck">✓ Check answer</button><button class="btn ghost small" id="chHint">💡 Hint</button><button class="btn ghost small" id="chSol" style="display:${(S.tries[id]||0) >= 2 ? 'inline-block':'none'}">👀 Show solution</button></div>
+    <div id="chMsg" style="margin-top:10px;font-weight:800"></div><div id="chOut"></div></div>
+  <div class="card complete-bar reveal" id="completeBar"></div>
+  <div class="row" style="justify-content:space-between">${id>1?`<a class="btn ghost small" href="#ch-${id-1}" style="text-decoration:none">← Chapter ${id-1}</a>`:'<span></span>'}${id<10?`<a class="btn ghost small" href="#ch-${id+1}" style="text-decoration:none">Chapter ${id+1} →</a>`:''}</div>
+  </section>`;
+}
+function wireChapter(id){
+  const c = CHAPTERS.find(x => x.id === id); if(!c) return;
+  codeBlocks($('main')); wirePlayground();
+  // quiz
+  $$('#quiz .q').forEach(qEl => {
+    const i = +qEl.dataset.i, q = c.quiz[i];
+    $$('.opt', qEl).forEach(b => b.onclick = () => {
+      const qd = S.quiz[id] = S.quiz[id] || {}; if(qd[i] === 'ok') return;
+      const j = +b.dataset.j;
+      if(j === q.a){ b.classList.add('right'); $('.why', qEl).textContent = '💡 ' + q.why; if(!qd[i]) addGems(10); qd[i] = 'ok'; save(); refreshComplete(c); }
+      else { b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong'); qd[i] = 'tried'; save(); $('.why', qEl).textContent = 'Not quite. Lumi believes in you. Try another!'; }
+    });
+  });
+  // challenge
+  const ed = $('#chEditor');
+  ed.addEventListener('input', () => { S.tries['code'+id] = ed.value; save(); });
+  ed.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); $('#chCheck').click(); } });
+  $('#chRun').onclick = () => renderResult($('#chOut'), ed.value);
+  $('#chHint').onclick = () => { $('#chMsg').innerHTML = `💡 <span style="font-weight:700">${esc(c.challenge.hint)}</span>`; };
+  $('#chSol').onclick = () => { ed.value = c.challenge.solution.replace(/ (FROM|WHERE|JOIN|GROUP BY|ORDER BY|HAVING)/g, '\n$1'); $('#chMsg').innerHTML = '👀 Here is one solution. Run it and see why it works!'; };
+  $('#chCheck').onclick = async () => {
+    await dbReady; renderResult($('#chOut'), ed.value);
+    const r = checkAnswer(ed.value, c);
+    if(r.ok){ $('#chMsg').innerHTML = '<span style="color:#2a9d74">🎉 Correct! Lumi is doing a happy wiggle.</span>'; if(!S.solved[id]){ S.solved[id] = true; addGems(50); confetti(40); } save(); refreshComplete(c); }
+    else { S.tries[id] = (S.tries[id]||0) + 1; save(); $('#chMsg').innerHTML = `<span style="color:#c0566e">🤔 ${r.msg}</span>`; if(S.tries[id] >= 2) $('#chSol').style.display = 'inline-block'; }
+  };
+  refreshComplete(c);
+}
+function refreshComplete(c){
+  const bar = $('#completeBar'); if(!bar) return;
+  const qd = S.quiz[c.id] || {}; const qOk = c.quiz.every((_, i) => qd[i] === 'ok'); const sOk = !!S.solved[c.id];
+  if(S.done[c.id]){ bar.innerHTML = `<div style="width:90px;margin:auto">${badge(c)}</div><h2 style="margin:6px 0">Chapter complete!</h2><a class="btn" href="#${c.id<10?'ch-'+(c.id+1):'game-5'}" style="text-decoration:none">${c.id<10?'Next chapter →':'Play the final game →'}</a>`; return; }
+  bar.innerHTML = `<h2 style="margin:0 0 6px">${qOk && sOk ? 'Ready to claim your badge!' : 'Finish the quiz and challenge to earn your badge'}</h2><p style="color:var(--muted)">${qOk?'✅':'⬜'} Quiz &nbsp; ${sOk?'✅':'⬜'} Challenge</p><button class="btn" id="claim" ${qOk && sOk ? '' : 'disabled'}>⭐ Complete chapter (+100 💎)</button>`;
+  const b = $('#claim'); if(b) b.onclick = () => completeChapter(c);
+}
+function completeChapter(c){
+  S.done[c.id] = true; addGems(100); save(); confetti();
+  const g = GAMES.find(g => g.after === c.id);
+  modal(`${badge(c)}<h2>Badge earned!</h2><p>You finished <b>${esc(c.title)}</b>. Your rank: <b>${level()}</b></p>
+    ${g ? `<p style="font-size:18px">🎁 <b>A treasure chest opened!</b><br>You unlocked the game <b>${esc(g.title)}</b>.</p><a class="btn" href="#game-${g.id}" data-close style="text-decoration:none">Play ${esc(g.title)} →</a>` :
+      `<a class="btn" href="#ch-${c.id+1}" data-close style="text-decoration:none">Next chapter →</a>`}
+    <div style="margin-top:12px"><button class="btn ghost small" data-close>Stay here</button></div>`);
+  refreshComplete(c);
+}
+
+// ---------- games ----------
+function viewGame(id){
+  const g = GAMES.find(x => x.id === id); if(!g) return viewHome();
+  if(!gameUnlocked(g)) return `<section class="view"><div class="card lockmsg">${lumiSVG('sm')}<h2>🔒 This treasure chest is still locked</h2><p>Finish chapters ${g.after-1} and ${g.after} to open <b>${esc(g.title)}</b>.</p><a class="btn" href="#ch-${S.done[g.after-1] ? g.after : g.after-1}" style="text-decoration:none">Go to the chapter →</a></div></section>`;
+  return `<section class="view"><div class="card" style="background:linear-gradient(135deg,#fff3c4,#ffe0ef)"><div class="game-head">${lumiSVG('sm')}<div><div class="kicker" style="font-weight:800;color:#8a6fd1">🎁 Reward game ${g.id} of 5</div><h1 style="margin:0;font-size:38px">${esc(g.title)}</h1><p style="margin:4px 0 0;font-size:17px">${esc(g.desc)}</p></div></div></div><div class="card" id="gameArea"></div></section>`;
+}
+function winGame(g, scoreText){
+  const first = !S.games[g.id]; S.games[g.id] = { done:true, score:scoreText }; if(first) addGems(150); save(); confetti(120);
+  if(g.id === 5) return showCert(scoreText);
+  modal(`<div style="font-size:70px;animation:pop .6s">🏆</div><h2>You won ${esc(g.title)}!</h2><p>${esc(scoreText)}${first?'<br><b>+150 💎</b>':''}</p><a class="btn" href="#ch-${Math.min(g.after+1,10)}" data-close style="text-decoration:none">Back to learning →</a><div style="margin-top:10px"><button class="btn ghost small" data-close id="again">Play again</button></div>`,
+    bg => { $('#again', bg).onclick = () => route(); });
+}
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function gameMemory(g, el){
+  const cards = shuffle(g.pairs.flatMap((p, i) => [{t:p[0], k:i, kw:true},{t:p[1], k:i}]));
+  let open = [], matched = 0, flips = 0, busy = false;
+  el.innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><b>Flips: <span id="flips">0</span></b><b>Pairs: <span id="pairs">0</span>/${g.pairs.length}</b></div><div class="memgrid">${cards.map((c, i) => `<div class="mcard" data-i="${i}"><div class="face front">✦</div><div class="face back ${c.kw?'mono':''}" style="${c.kw?'color:#7a3fd1;font-size:17px':''}">${esc(c.t)}</div></div>`).join('')}</div>`;
+  $$('.mcard', el).forEach(m => m.onclick = () => {
+    if(busy || m.classList.contains('flip') || m.classList.contains('matched')) return;
+    m.classList.add('flip'); open.push(m); flips++; $('#flips').textContent = flips;
+    if(open.length === 2){ const [a,b] = open, ca = cards[a.dataset.i], cb = cards[b.dataset.i];
+      if(ca.k === cb.k){ a.classList.add('matched'); b.classList.add('matched'); open = []; matched++; $('#pairs').textContent = matched; if(matched === g.pairs.length) setTimeout(() => winGame(g, `Solved in ${flips} flips (perfect is 16).`), 600); }
+      else { busy = true; setTimeout(() => { a.classList.remove('flip'); b.classList.remove('flip'); open = []; busy = false; }, 900); } }
+  });
+}
+function gameOrder(g, el){
+  let round = 0, mistakes = 0;
+  const draw = () => {
+    const parts = g.rounds[round], sh = shuffle(parts.map((p, i) => ({p, i}))); let nextI = 0;
+    el.innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><b>Query ${round+1} of ${g.rounds.length}</b><b>Oops count: ${mistakes}</b></div><div class="built" id="built"><span style="color:#9a92b8">-- tap the clauses in order…</span></div><div class="tokens">${sh.map(t => `<button class="token" data-i="${t.i}">${esc(t.p)}</button>`).join('')}</div>`;
+    $$('.token', el).forEach(b => b.onclick = () => {
+      if(+b.dataset.i === nextI){ if(nextI === 0) $('#built').innerHTML = ''; b.classList.add('used'); $('#built').insertAdjacentHTML('beforeend', `<div>${hl(parts[nextI])}</div>`); nextI++;
+        if(nextI === parts.length){ round++; setTimeout(() => round < g.rounds.length ? (toast('Query rebuilt! ✨'), draw()) : winGame(g, `All ${g.rounds.length} queries rebuilt with ${mistakes} oops.`), 700); } }
+      else { mistakes++; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = 'shake .4s'; b.style.borderColor = '#ffb3b3'; setTimeout(() => b.style.borderColor = '', 500); $('b:last-child', el).textContent = 'Oops count: ' + mistakes; }
+    });
+  };
+  draw();
+}
+function gameJoin(g, el){
+  let round = 0, score = 0;
+  const tbl = t => `<table><caption style="font-weight:800;padding:4px">${t.name}</caption><tr>${t.cols.map(c => `<th>${c}</th>`).join('')}</tr>${t.rows.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
+  const draw = () => {
+    const r = g.rounds[round];
+    el.innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><b>Case ${round+1} of ${g.rounds.length}</b><b>Score: ${score}</b></div><div class="jtables">${tbl(g.left)}${tbl(g.right)}</div>
+      <h3 style="font-size:22px;margin:8px 0">🔎 How many rows does <span class="mono" style="color:#7a3fd1">${esc(r.q)}</span> return?</h3>
+      <div class="row"><input class="bigin" id="jin" type="number" min="0"><button class="btn small" id="jgo">Check</button></div><div id="jmsg" style="margin-top:10px;font-weight:800"></div>`;
+    $('#jin').focus(); $('#jin').onkeydown = e => { if(e.key === 'Enter') $('#jgo').click(); };
+    $('#jgo').onclick = () => { const v = +$('#jin').value, ok = v === r.a; if(ok) score++;
+      $('#jmsg').innerHTML = `${ok ? '✅ Correct!' : `❌ It's ${r.a}.`} <span style="font-weight:600">${esc(r.why)}</span><br><button class="btn small" id="jnext" style="margin-top:10px">${round+1 < g.rounds.length ? 'Next case →' : 'Finish'}</button>`;
+      $('#jgo').disabled = true; $('#jnext').onclick = () => { round++; round < g.rounds.length ? draw() : winGame(g, `Detective score: ${score} / ${g.rounds.length}.`); }; };
+  };
+  draw();
+}
+function gameTeaser(g, el){
+  let round = 0, score = 0, tries = 0;
+  const draw = () => {
+    const r = g.rounds[round]; tries = 0;
+    el.innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><b>Teaser ${round+1} of ${g.rounds.length}</b><b>Solved: ${score}</b></div>
+      <div style="display:flex;gap:16px;align-items:center;margin-top:12px"><div style="font-size:56px;animation:bob 3s infinite">🧠</div><h3 style="font-size:21px;margin:0;line-height:1.4">${esc(r.q)}</h3></div>
+      <div class="row"><input class="bigin" id="tin" placeholder="?"><button class="btn small" id="tgo">Answer</button><button class="btn ghost small" id="tskip" style="display:none">Reveal</button></div><div id="tmsg" style="margin-top:10px;font-weight:800"></div>`;
+    $('#tin').focus(); $('#tin').onkeydown = e => { if(e.key === 'Enter') $('#tgo').click(); };
+    const next = () => { $('#tgo').disabled = true; $('#tmsg').insertAdjacentHTML('beforeend', `<br><button class="btn small" id="tnext" style="margin-top:10px">${round+1 < g.rounds.length ? 'Next teaser →' : 'Finish'}</button>`); $('#tnext').onclick = () => { round++; round < g.rounds.length ? draw() : winGame(g, `You cracked ${score} of ${g.rounds.length} teasers.`); }; };
+    $('#tgo').onclick = () => { const v = $('#tin').value.replace(/[^0-9.]/g, '');
+      if(v === r.a){ score++; $('#tmsg').innerHTML = `✅ Brilliant! <span style="font-weight:600">${esc(r.why)}</span>`; next(); }
+      else { tries++; $('#tmsg').innerHTML = tries === 1 ? '🤔 Not quite. Slow down and try once more!' : '🤔 Still not it. Try again or reveal the answer.'; if(tries >= 2) $('#tskip').style.display = 'inline-block'; } };
+    $('#tskip').onclick = () => { $('#tmsg').innerHTML = `💡 Answer: <b>${r.a}</b>. <span style="font-weight:600">${esc(r.why)}</span>`; $('#tskip').style.display = 'none'; next(); };
+  };
+  draw();
+}
+function gameBlitz(g, el){
+  el.innerHTML = `<div style="text-align:center"><p style="font-size:18px">20 statements, 60 seconds. Ready?</p><button class="btn" id="bgo">⚡ Start the blitz</button></div>`;
+  $('#bgo').onclick = () => {
+    const items = shuffle(g.items); let i = 0, score = 0, t = 60;
+    el.innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><b>⏱️ <span id="bt">60</span>s</b><b>Score: <span id="bs">0</span></b></div><div class="timer" style="margin:10px 0"><i id="bar" style="width:100%"></i></div><div class="blitz-q" id="bq"></div><div class="row" style="justify-content:center"><button class="btn mint" id="bT" style="min-width:140px">✔ True</button><button class="btn" id="bF" style="min-width:140px">✘ False</button></div><div id="bfb" style="text-align:center;font-weight:800;margin-top:10px;min-height:24px"></div>`;
+    const show = () => { $('#bq').textContent = items[i][0]; $('#bq').style.animation = 'none'; void $('#bq').offsetWidth; $('#bq').style.animation = 'fadeUp .3s'; };
+    const end = () => { clearInterval(tm); winGame(g, `Blitz score: ${score} / ${items.length}.`); };
+    const ans = v => { if(i >= items.length) return; const ok = v === items[i][1]; if(ok) score++; $('#bs').textContent = score; $('#bfb').textContent = ok ? '✅ Yes!' : '❌ Nope'; i++; i < items.length ? show() : end(); };
+    $('#bT').onclick = () => ans(true); $('#bF').onclick = () => ans(false);
+    const tm = setInterval(() => { t--; const bt = $('#bt'); if(!bt){ clearInterval(tm); return; } bt.textContent = t; $('#bar').style.width = (t/60*100) + '%'; if(t <= 0) end(); }, 1000);
+    show();
+  };
+}
+function showCert(scoreText){
+  const name = S.name || 'SQL Adventurer'; const date = new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
+  $('main').innerHTML = `<section class="view"><div class="cert card">${lumiSVG('sm')}<div class="kicker" style="font-weight:800;color:#8a6fd1;letter-spacing:2px">CERTIFICATE OF COMPLETION</div><h1>${esc(name)}</h1><p style="font-size:18px">completed all 10 chapters of <b>SQL Quest</b>, from SELECT to window functions, and earned the rank of <b>SQL Sage</b>.</p><p>💎 ${S.gems} gems · 🏅 10 badges · ${esc(scoreText)}</p><p style="color:var(--muted)">${date}</p><div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap">${CHAPTERS.map(c => `<div style="width:56px">${badge(c).replace('class="badge"','style="width:56px;height:56px"')}</div>`).join('')}</div></div>
+  <div class="card"><h2 style="margin:0">What next?</h2><ul><li>Practice daily on <a href="https://datalemur.com" target="_blank" rel="noopener">DataLemur</a> or <a href="https://leetcode.com/problemset/database/" target="_blank" rel="noopener">LeetCode SQL</a>.</li><li>Install PostgreSQL and load a public dataset you care about.</li><li>Revisit Chapter 10 and explain each report out loud, as you would in an interview.</li></ul><a class="btn" href="#home" style="text-decoration:none">Back to the map</a></div></section>`;
+  confetti(160);
+}
+function wireGame(id){
+  const g = GAMES.find(x => x.id === id), el = $('#gameArea'); if(!g || !el) return;
+  ({memory:gameMemory, order:gameOrder, join:gameJoin, teaser:gameTeaser, blitz:gameBlitz})[g.kind](g, el);
+}
+function viewCheat(){
+  const blocks = [
+    ["The query skeleton", "SELECT col, AGG(col) AS alias\nFROM table1 t1\nJOIN table2 t2 ON t2.key = t1.key\nWHERE row_condition\nGROUP BY col\nHAVING AGG(col) > 10\nORDER BY alias DESC\nLIMIT 10;"],
+    ["Filters", "WHERE a = 1 AND (b = 'x' OR b = 'y')\nWHERE col IN ('A', 'B')\nWHERE d BETWEEN '2025-01-01' AND '2025-12-31'\nWHERE name LIKE 'A%'\nWHERE col IS NULL"],
+    ["Aggregates", "COUNT(*), COUNT(DISTINCT col), SUM(col), AVG(col), MIN(col), MAX(col)"],
+    ["Joins", "FROM a JOIN b ON b.id = a.b_id        -- matches only\nFROM a LEFT JOIN b ON b.id = a.b_id   -- all of a\n-- anti-join: LEFT JOIN ... WHERE b.id IS NULL"],
+    ["CASE & NULLs", "CASE WHEN x > 10 THEN 'big' ELSE 'small' END\nCOALESCE(col, 'n/a')\nx / NULLIF(y, 0)"],
+    ["CTE", "WITH step1 AS (SELECT ...),\n     step2 AS (SELECT ... FROM step1)\nSELECT * FROM step2;"],
+    ["Window functions", "ROW_NUMBER() OVER (PARTITION BY grp ORDER BY val DESC)\nRANK() / DENSE_RANK() OVER (ORDER BY val DESC)\nSUM(val) OVER (ORDER BY dt)            -- running total\nLAG(val) OVER (ORDER BY dt)            -- previous row"]
+  ];
+  return `<section class="view"><div class="ch-head" style="background:linear-gradient(135deg,#e1d4ff,#fff)">${art('nest','#e1d4ff')}<div><div class="kicker">Reference</div><h1>Cheat sheet</h1><div class="sub">Everything from the course on one page. Try any of it in the playground at the bottom.</div></div></div>
+  <div class="card cheat"><h2 style="margin:0 0 8px">⏱️ The order SQL runs in</h2><div class="order-strip"><span>FROM</span><span>WHERE</span><span>GROUP BY</span><span>HAVING</span><span>SELECT</span><span>ORDER BY</span><span>LIMIT</span></div></div>
+  ${blocks.map(([h, s]) => `<div class="card cheat reveal"><h2 style="margin:0 0 8px">${h}</h2><pre class="sqlc">${hl(s)}</pre></div>`).join('')}
+  ${playground('SELECT * FROM orders LIMIT 10;')}</section>`;
+}
+
+// ---------- router ----------
+function route(){
+  const h = (location.hash || '#home').slice(1); const main = $('main'); let html, after = null;
+  let m;
+  if((m = h.match(/^ch-(\d+)$/))){ const id = +m[1]; html = viewChapter(id); after = () => wireChapter(id); }
+  else if((m = h.match(/^game-(\d+)$/))){ const id = +m[1]; html = viewGame(id); after = () => wireGame(id); }
+  else if(h === 'cheatsheet'){ html = viewCheat(); after = () => wirePlayground(); }
+  else html = viewHome();
+  main.innerHTML = html; window.scrollTo({top:0});
+  $$('.nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + h || (h.startsWith('ch-') && a.dataset.k === 'learn')));
+  if(after) after(); reveal(main); updateTop();
+}
+window.addEventListener('hashchange', route);
+
+// ---------- settings / welcome ----------
+function settings(){
+  modal(`<h2>⚙️ Your progress</h2><p>Progress saves in this browser. Copy this code to move it to another device or keep a backup.</p>
+    <textarea id="bk" readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea>
+    <div class="row" style="justify-content:center"><button class="btn small" id="cp">Copy code</button></div>
+    <p style="margin-top:16px">Restore from a code:</p><textarea id="rs" placeholder="Paste a backup code here"></textarea>
+    <div class="row" style="justify-content:center"><button class="btn mint small" id="rsgo">Restore</button><button class="btn ghost small" id="rename">Change name</button><button class="btn ghost small" id="wipe">Reset everything</button></div><div id="sm" style="font-weight:800;margin-top:8px"></div>`, bg => {
+    $('#cp', bg).onclick = async () => { try{ await navigator.clipboard.writeText($('#bk', bg).value); $('#sm', bg).textContent = 'Copied!'; }catch(e){ $('#bk', bg).select(); $('#sm', bg).textContent = 'Select the text above and copy it.'; } };
+    $('#rsgo', bg).onclick = () => { try{ S = Object.assign({name:"",gems:0,done:{},quiz:{},solved:{},games:{},tries:{}}, JSON.parse(decodeURIComponent(escape(atob($('#rs', bg).value.trim()))))); save(); bg.remove(); route(); toast('Progress restored!'); }catch(e){ $('#sm', bg).textContent = "That code didn't work."; } };
+    $('#rename', bg).onclick = () => { bg.remove(); welcome(); };
+    let armed = false; $('#wipe', bg).onclick = e => { if(!armed){ armed = true; e.target.textContent = 'Tap again to confirm'; return; } S = {name:S.name,gems:0,done:{},quiz:{},solved:{},games:{},tries:{}}; save(); bg.remove(); route(); toast('Fresh start!'); };
+  });
+}
+function welcome(){
+  modal(`${lumiSVG('sm')}<h2>Hi, I'm Lumi! 👋</h2><p>I'll be your guide through SQL Quest. What should I call you?</p><input id="nm" class="bigin" style="width:100%;font-size:20px" placeholder="Your name" value="${esc(S.name)}"><div class="row" style="justify-content:center"><button class="btn" id="go">Let's go!</button></div>`, bg => {
+    const go = () => { S.name = $('#nm', bg).value.trim().slice(0, 40); save(); bg.remove(); route(); };
+    $('#go', bg).onclick = go; $('#nm', bg).onkeydown = e => { if(e.key === 'Enter') go(); }; setTimeout(() => $('#nm', bg).focus(), 50);
+  });
+}
+
+// ---------- boot ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const b = $('.bubbles'); for(let i=0;i<18;i++){ const s = document.createElement('span'); const z = 10 + Math.random()*40; s.style.width = s.style.height = z + 'px'; s.style.left = Math.random()*100 + '%'; s.style.animationDuration = (14 + Math.random()*18) + 's'; s.style.animationDelay = (-Math.random()*20) + 's'; b.appendChild(s); }
+  $('#settingsBtn').onclick = settings;
+  route();
+  if(!S.name) setTimeout(welcome, 500);
+});
+})();
+</script>
+</body></html>
